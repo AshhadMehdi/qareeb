@@ -1,0 +1,26 @@
+# docker compose up -d --build   →  http://localhost:4000
+services:
+  qareeb:
+    build: .
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      JWT_SECRET: ${JWT_SECRET:-change-me-to-a-long-random-string}
+      AUTO_SEED: ${AUTO_SEED:-true}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-password123}
+      # PUBLIC_URL: https://qareeb.example.com
+      # CORS_ORIGINS: https://qareeb.example.com
+      # GOOGLE_CLIENT_ID:
+      # VAPID_SUBJECT: mailto:support@qareeb.app
+      # VAPID_PUBLIC_KEY:
+      # VAPID_PRIVATE_KEY:
+    volumes:
+      - qareeb-data:/app/server/data
+      - qareeb-uploads:/app/server/uploads
+    restart: unless-stopped
+
+volumes:
+  qareeb-data:
+  qareeb-uploads:

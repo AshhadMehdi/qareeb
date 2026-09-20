@@ -1,0 +1,26 @@
+{
+  "name": "qareeb",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Qareeb - hyperlocal shop discovery, multi-shop ordering and live delivery tracking (customer, merchant, runner & admin apps)",
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c green,cyan \"npm:dev -w server\" \"npm:dev -w client\"",
+    "build": "npm run build -w client && npm run build -w server",
+    "start": "npm run start -w server",
+    "db:push": "npm run db:push -w server",
+    "db:seed": "npm run db:seed -w server",
+    "db:reset": "npm run db:reset -w server",
+    "typecheck": "npm run typecheck -w server && npm run typecheck -w client",
+    "test:deploy": "node --test scripts/deployment.test.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=22.13"
+  }
+}

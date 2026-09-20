@@ -1,0 +1,12 @@
+.git
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+!**/.env.example
+server/data
+server/uploads
+server/.vapid.json
+*.mp4
+*.zip
+*.log

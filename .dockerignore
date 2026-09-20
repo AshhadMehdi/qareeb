@@ -1,0 +1,17 @@
+.git
+.github
+node_modules
+**/node_modules
+**/dist
+server/data
+server/uploads
+server/.vapid.json
+.env
+.env.*
+!.env.example
+*.mp4
+*.log
+.vite
+coverage
+README.md
+DEPLOY.md
