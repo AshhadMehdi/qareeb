@@ -1,118 +1,68 @@
-# Qareeb — start here after downloading
+# Deploy Qareeb on Vercel (only)
 
-This is the complete source project: React frontend, Node API, database migrations, demo data, images, and deployment configuration. No rewrite is needed to fix the Vercel workspace error.
+Use **this** ZIP. You do **not** need Render. You do **not** paste SQL. You do **not** add `VITE_API_URL`.
 
-## 1. Upload the files correctly
+The website, API, shops, orders and images all run on **Vercel**. Vercel still needs a free Postgres database (Neon), created from the same Vercel page.
 
-Extract `qareeb-ready.zip`. Upload the **contents of the qareeb folder** to the root of your GitHub repository, replacing files with the same names. Include hidden configuration files if your file picker hides them. Do not upload the ZIP itself to GitHub as the application.
+## 1. Put the code on GitHub
 
-Your repository should look like this (no extra enclosing folder):
+Extract the ZIP. Upload the **inside** of the `qareeb` folder so GitHub shows these at the root:
 
 ```
-package.json
-package-lock.json
-vercel.json
-render.yaml
-Dockerfile
+api/
 client/
-  package.json
-  vercel.json
-  src/
-  public/
 server/
-  package.json
-  src/
-  drizzle/
-scripts/
-START-HERE.md
+supabase/
+package.json
+vercel.json
 ```
 
-The archive deliberately excludes dependencies, compiled builds, secrets, database files, user uploads, Git history, and the unrelated original video files. Hosts install dependencies and build the app from source. Existing local files have not been deleted.
+## 2. Import the repo in Vercel
 
-## 2. Recommended: run the whole app on one host
+1. Open [https://vercel.com/new](https://vercel.com/new)
+2. Import the GitHub repo
+3. **Root Directory:** empty (or `./`). **Not** `client`
+4. **Framework Preset:** Other
+5. **Delete** any `VITE_API_URL` variable (that old value was wrong)
+6. Do **not** add Supabase keys. They are optional now.
 
-This is simpler than splitting it between Vercel and Render:
+## 3. Add a database (this is the one extra click)
 
-1. Upload the project to GitHub as described above.
-2. Render → **New → Blueprint** → select the repository and the branch you uploaded to → apply `render.yaml`.
-3. Wait for deployment. Visit the generated URL. It serves both the website and API.
-4. Check `<render-url>/api/health` returns JSON containing `"ok": true`.
+Still in that Vercel project:
 
-The included Render configuration is for a **demo**. Free hosting can sleep and its local database/uploads are ephemeral. For real orders, configure persistent storage as described in `DEPLOY.md`. Do not use default demo passwords for a public launch.
+1. Open the **Storage** tab
+2. **Create Database**
+3. Choose **Neon** (or Postgres)
+4. Create it and **connect it to this project**
+5. Wait until it says **Connected**
 
-## 3. If you want the frontend on Vercel
+Vercel will add `POSTGRES_URL` or `DATABASE_URL` by itself. You do not type a password into the Environment Variables box.
 
-Keep the Render service from step 2 running — Vercel alone cannot run this project's long-running Socket.io server and local SQLite/upload storage.
+## 4. Deploy
 
-Use these Vercel project settings:
+Click **Deploy**. If the project already deployed once, click **Redeploy**.
 
-| Setting | Recommended value |
-| --- | --- |
-| Root Directory | Empty / repository root |
-| Framework Preset | Other |
-| Node.js Version | 22.x |
-| Install Command | From `vercel.json`: `npm ci --include=dev` |
-| Build Command | From `vercel.json`: `npm --prefix client run build` |
-| Output Directory | From `vercel.json`: `client/dist` |
-| Environment variable | `VITE_API_URL=https://YOUR-ACTUAL-RENDER-URL` |
+Open the Vercel website. The first load can take up to a minute while Qareeb creates the shops.
 
-- **Clear old dashboard overrides**, particularly `npm run build -w client`. Configuration files cannot reliably correct conflicting project overrides for you.
-- Set `VITE_API_URL` for Production and, if needed, Preview. Use the API origin only, not `/api`, and not `localhost`.
-- Redeploy after changing environment variables; Vite embeds them at build time.
-- Use the branch containing your newly uploaded files as the Production Branch.
-- Existing deployments are not changed by a new upload until you deploy that upload.
+## 5. Sign in
 
-### Alternative: Vercel Root Directory = client
+| Role | Email | Password |
+| --- | --- | --- |
+| Customer | `ali@demo.com` | `password123` |
+| Shop owner | `madina@demo.com` | `password123` |
+| Rider | `rider1@demo.com` | `password123` |
+| Admin | `admin@qareeb.app` | `password123` |
 
-This is also supported through `client/vercel.json`. Keep the **whole project** in your repository, enable **Include source files outside of the Root Directory in the Build Step** in Vercel, and clear dashboard build/install/output overrides.
+Those buttons are also on the login screen.
 
-The nested configuration runs `cd .. && npm ci --include=dev`, then `npm run build` inside `client`, and publishes `dist`. Do not upload only the client directory: the lockfile and workspace manifests live above it.
+## If the page says “Add a database”
 
-### Images and CORS
+The Storage database is not connected yet.
 
-On Render, set `PUBLIC_URL` to its public HTTPS origin. New uploads also resolve against `VITE_API_URL` in the frontend when the API returns a relative path.
+- Storage → your database → connect this project → **Redeploy**
+- Root Directory is not `client`
+- `VITE_API_URL` is deleted
 
-Optionally set `CORS_ORIGINS` to the exact frontend origins, separated by commas. Include any Vercel preview domains you intend to use; otherwise those previews will be blocked. Leaving it unset permits cross-origin requests broadly, suitable for the demo but not a restrictive production configuration.
+Do not send passwords or secret keys in chat.
 
-## 4. Test the app
-
-Demo accounts (password `password123`, unless you changed `DEMO_PASSWORD`):
-
-| Role | Email |
-| --- | --- |
-| Customer | `ali@demo.com` |
-| Merchant | `madina@demo.com` |
-| Rider | `rider1@demo.com` |
-| Admin | `admin@qareeb.app` |
-
-From a terminal in the project root, using Node 22.13 or newer:
-
-```sh
-npm ci --include=dev
-npm run typecheck
-npm run build
-npm run test:deploy
-npm run dev
-```
-
-`test:deploy` creates and deletes its own temporary database. It tests health/CORS, SPA links, all four roles, authorization, catalog data, uploads, and Socket.io. It never resets your application's database.
-
-To serve the compiled app locally, stop the development API first, then run `npm start`; the full app is served on port 4000. Public production hosts must set `NODE_ENV=production` and a strong `JWT_SECRET`.
-
-## What this download fixes
-
-- Vercel build configuration for both repository-root and `client` root choices.
-- Backend warm-up retry loop no longer restarts when its status changes.
-- Correct image URLs with a separately hosted API.
-- Updated Drizzle ORM and Google authentication dependencies; `npm audit --omit=dev` reports zero production vulnerabilities at packaging time.
-- Four moderate audit entries remain in the development-only drizzle-kit/esbuild dependency chain. Do not run `npm audit fix --force`: npm proposes a breaking downgrade. These tools are pruned from the Docker runtime image.
-
-## Limits to know before launching
-
-- This download fixes and tests the deployment path; it is not a complete security audit or a claim that every application edge case is bug-free.
-- Card/JazzCash/EasyPaisa payments are simulated, not connected to real payment processors.
-- Google Sign-In requires your Google OAuth client configuration; real Google login is not covered by the local deployment tests.
-- Push notifications need HTTPS, permission, and persistent VAPID keys for stable production use.
-- Persistent database and image storage, non-demo credentials, backups, and real payment integration are required before taking real customer orders.
-
-See `DEPLOY.md` for Docker, Railway, storage, environment variables, and troubleshooting.
+Hobby/free plans are for personal testing. Provider signup rules can change; a card-free database is not guaranteed forever. Change demo passwords before real customers. Card/JazzCash/EasyPaisa payments in the app are simulated.

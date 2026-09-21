@@ -2,15 +2,28 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "installCommand": "npm ci --include=dev",
-  "buildCommand": "npm --prefix client run build",
+  "buildCommand": "npm run build",
   "outputDirectory": "client/dist",
   "rewrites": [
     {
-      "source": "/((?!api/|uploads/|socket\\.io/).*)",
+      "source": "/api/:path*",
+      "destination": "/api"
+    },
+    {
+      "source": "/((?!api(?:/|$)|assets/|uploads/|socket\\.io/).*)",
       "destination": "/index.html"
     }
   ],
   "headers": [
+    {
+      "source": "/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    },
     {
       "source": "/sw.js",
       "headers": [
@@ -29,5 +42,11 @@
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 60,
+      "includeFiles": "{server/dist/**,supabase/schema.sql}"
+    }
+  }
 }

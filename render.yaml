@@ -22,8 +22,8 @@ services:
       - key: DEMO_PASSWORD
         value: password123
       # ── Persistence (needs a paid instance: uncomment the disk + both env vars) ──
-      # - key: DATABASE_URL
-      #   value: file:/var/data/qareeb.db
+      # - key: LOCAL_DATABASE_PATH
+      #   value: /var/data/postgres
       # - key: UPLOADS_DIR
       #   value: /var/data/uploads
     # disk:

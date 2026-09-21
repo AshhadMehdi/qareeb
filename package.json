@@ -15,7 +15,8 @@
     "db:seed": "npm run db:seed -w server",
     "db:reset": "npm run db:reset -w server",
     "typecheck": "npm run typecheck -w server && npm run typecheck -w client",
-    "test:deploy": "node --test scripts/deployment.test.mjs"
+    "test:deploy": "node --test scripts/deployment.test.mjs scripts/supabase.test.mjs",
+    "demo:export": "npm run build -w server && node scripts/export-demo-sql.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

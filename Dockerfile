@@ -31,10 +31,10 @@ COPY --from=build --chown=node:node /app/package.json ./
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/server/package.json ./server/
 COPY --from=build --chown=node:node /app/server/dist ./server/dist
-COPY --from=build --chown=node:node /app/server/drizzle ./server/drizzle
+COPY --from=build --chown=node:node /app/supabase ./supabase
 COPY --from=build --chown=node:node /app/client/dist ./client/dist
 
-# runtime data (SQLite db, uploaded photos, cached VAPID keys) – mount volumes here to persist
+# runtime data (local PostgreSQL data, uploaded photos, cached VAPID keys) – mount volumes here to persist
 RUN mkdir -p server/data server/uploads && chown -R node:node server
 USER node
 VOLUME ["/app/server/data", "/app/server/uploads"]
