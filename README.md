@@ -8,7 +8,7 @@ Everything ships in this repo: **serverless API + PostgreSQL database + seed dat
 
 ---
 
-> **New deployment:** Vercel only. Start with [START-HERE.md](START-HERE.md). Connect Neon from the Vercel Storage tab; the first visit creates tables and demo shops. Live updates use authenticated five-second polling.
+> **Deploying:** Vercel only, from the repository root. Connect a Neon/Postgres database from the Vercel **Storage** tab (it sets `POSTGRES_URL`); the first request creates the tables and seeds the demo shops. Live updates use authenticated five-second polling — no socket server to deploy.
 
 ## Feature tour
 
@@ -19,14 +19,14 @@ Everything ships in this repo: **serverless API + PostgreSQL database + seed dat
 - **Multi-shop cart** – items grouped per shop, per-shop notes, quantity steppers; guests can browse and fill a cart, sign-in is asked only at checkout.
 - **Checkout** – saved addresses with map pin & reverse geocoding, live quote per shop (distance, zone, fee, free-delivery thresholds, minimum order, stock issues), promo codes, rider tips, **payment methods: Cash on delivery, JazzCash, Easypaisa, Card (sandbox) and Qareeb points wallet**, order notes. One order per shop, linked by a group id.
 - **Live tracking** – status timeline, rider on the map with smooth motion, ETA, call / WhatsApp / **in-app chat** with the rider and shop, cancel window, receipt, reorder.
-- Order history, favourites, saved addresses, loyalty **points wallet**, notification centre, **Web Push** notifications, installable **PWA** (offline shell), **dark mode** (light / dark / follow-system, with dark map tiles).
-- Email/password and **Google Sign-In** (optional).
+- Order history, favourites, saved addresses, loyalty **points wallet**, notification centre, installable **PWA** (offline shell; web-push subscriptions are accepted by the API).
+- Email/password sign-in, or browse without an account and sign in at checkout.
 
 ### Merchant dashboard (`/merchant`)
 - 3-step **shop setup wizard** (details → map location → hours) with sensible default delivery rings.
 - **Overview** – today's sales, pending orders, revenue chart, orders by status, top products, low-stock alerts, one-tap *pause shop*.
 - **Orders** – new orders ring a bell in real time; accept / reject with reason, preparing → ready, assign a rider (own team or **auto-assign nearest by distance + workload**), self-deliver fallback, chat with the customer, printable receipt.
-- **Products** – photos (upload) or emoji, categories, units, prices & compare-at prices, inline stock +/- and visibility switches, featured items.
+- **Products** – icon/emoji badge, categories, units, prices & compare-at prices, inline stock +/- and visibility switches, featured items.
 - **Shop settings** – details & branding, opening hours per weekday, **ring-based delivery zones** (radius → fee, free-above threshold) with a live map preview.
 - **Riders** – build your own team by email, see platform riders nearby, online status and workload.
 - **Promo codes** – percent / fixed / free delivery, min order, caps, expiry, usage limits.
@@ -48,18 +48,18 @@ Everything ships in this repo: **serverless API + PostgreSQL database + seed dat
 |---|---|
 | Server | Node 22, **Express 5**, TypeScript (ESM), zod validation, JWT + bcrypt, web-push (VAPID), multer uploads, helmet/cors/rate-limit |
 | Database | **PostgreSQL** + **Drizzle ORM**. Vercel Storage (Neon) or any `DATABASE_URL`/`POSTGRES_URL`. Local development uses PGlite. Schema is applied automatically. |
-| Client | **Vite 6 + React 19 + TypeScript**, Tailwind CSS v4, React Router 7, TanStack Query, Zustand (persisted cart/auth/location), react-leaflet, framer-motion, recharts, sonner |
+| Client | **Vite 7 + React 19 + TypeScript**, Tailwind CSS v4, React Router 7, TanStack Query, Zustand (persisted cart/auth/location), react-leaflet, recharts, sonner |
 | Realtime | Durable, authorized HTTP event polling every 5 seconds (while visible): order events, chat, rider GPS |
 | PWA | Web manifest + hand-written service worker (app-shell cache, push, notification click routing) |
-| Theming | Tailwind v4 CSS variables remapped under `html.dark` (no per-class `dark:` variants); theme persisted in `localStorage` and applied pre-paint |
+| Theming | Tailwind v4 `@theme` tokens — cream paper + forest green, Fraunces on the hero greeting only, Plus Jakarta Sans everywhere else |
 
 ### Repo layout
 ```
-api/       Vercel function entry point
-server/    Express API, Drizzle PostgreSQL schema, seed data
-client/    React app (customer / merchant / rider / admin)
-supabase/  Auto-applied schema (optional extra SQL kept for reference)
-scripts/   Deployment tests and downloadable source packaging
+api/       Vercel function entry point (lazy-imports server/dist/serverless.js)
+server/    Express API, Drizzle PostgreSQL schema, applied SQL, seed data
+client/    React app (customer / merchant / rider / admin) + PWA assets
+scripts/   dev.mjs — starts the API and the web app together
+server/sql/schema.sql   generated, idempotent — applied once per boot
 ```
 
 ---
@@ -101,7 +101,8 @@ Promo codes to try: `WELCOME50` (Rs 50 off ≥ Rs 500), `FREESHIP` (≥ Rs 800),
 | `npm start` | production server – serves the API **and** the built web app on one port |
 | `npm run typecheck` | `tsc --noEmit` for both workspaces |
 | `npm run db:seed` / `npm run db:reset` | seed demo data / wipe and reseed |
-| `npm run db:push` | push the Drizzle schema without migrations (dev only) |
+| `npm run dev:api` / `npm run dev:web` | run just the API or just the web app |
+| `npm run db:generate-schema` | not a script — `cd server && node scripts/sync-schema-sql.mjs` regenerates `server/sql/schema.sql` from the Drizzle schema |
 
 ## Configuration
 Copy `server/.env.example` → `server/.env` (and optionally `client/.env.example` → `client/.env.local`). Key variables:
@@ -110,23 +111,21 @@ Copy `server/.env.example` → `server/.env` (and optionally `client/.env.exampl
 - `GOOGLE_CLIENT_ID` – enables the Google Sign-In button (client reads it from `/api/config`).
 - `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` – Web Push keys; required for push on Vercel (otherwise disabled). Generated locally during development.
 - `DATABASE_URL` or `POSTGRES_URL` – hosted PostgreSQL. Vercel Storage (Neon) sets this automatically. Omit only for local PGlite development.
-- `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` – optional image storage; images otherwise live in Postgres.
 - `CORS_ORIGINS` – extra origins when the client is hosted separately.
 
 ## Production deploy
 
 **Vercel only.** Frontend and API deploy from the repository root. Create a Neon/Postgres database from the Vercel **Storage** tab and connect it to the project. Do not set `VITE_API_URL`. Do not set Root Directory to `client`.
 
-Read **[START-HERE.md](START-HERE.md)**. The first request creates tables and demo shops automatically.
+The build output is `client/dist` and the API is the root `api/index.js` function; both live on the same origin, so there is no `VITE_API_URL`. The first request creates the tables and the demo shops automatically.
 
 ```sh
 npm ci --include=dev
 npm run typecheck
 npm run build
-npm run test:deploy
 ```
 
-Hosted signup and quota requirements can change; free hosting is not guaranteed for commercial use. Real payments, backups, removal of demo users and a production security review are required before launching to real customers.
+Hosted signup and quota requirements can change; free hosting is not guaranteed for commercial use. Real payment gateways, backups, removal of the demo users and a production security review are required before launching to real customers.
 
 ## API overview
 All endpoints are under `/api`, JSON in/out, `Authorization: Bearer <jwt>`. Errors are `{ "error": "message" }`.
@@ -139,7 +138,7 @@ All endpoints are under `/api`, JSON in/out, `Authorization: Bearer <jwt>`. Erro
 - `merchant`: shop, zones, products (+bulk), orders & status, assign runner (`runnerId | "auto"`), runners, promos, analytics
 - `runner`: profile, location, deliveries & status, decline, earnings
 - `admin`: stats, shops, users, orders, settings, promos, broadcast
-- `uploads`: multipart image upload → `/api/uploads/:id` (Postgres) or optional Supabase Storage; local `/uploads/...` during development
+- `uploads`: multipart image upload → `/api/uploads/:id` (stored in Postgres)
 - Event feed: `order:created`, `order:updated`, `notification`, `chat:message`, `runner:location`, `shop:updated`
 
 ## Design notes
@@ -147,4 +146,5 @@ All endpoints are under `/api`, JSON in/out, `Authorization: Bearer <jwt>`. Erro
 - **Order lifecycle**: `PENDING → ACCEPTED → PREPARING → READY → ON_THE_WAY → DELIVERED` (+ `CANCELLED`). Transitions are validated per role on the server; customers can cancel while pending or within a configurable window after acceptance; cancellations restock items and refund online/wallet payments.
 - **Auto-assign** scores riders by distance to the shop, current load and whether they belong to the shop's team.
 - **Payments** other than COD are simulated (marked paid instantly) — swap in a JazzCash/Easypaisa/Stripe gateway inside `placeOrders()`.
-- **Loyalty**: a configurable % of the subtotal is credited as points when an order is delivered; points can pay for orders.
+- **Loyalty**: 2 points per Rs 100 (configurable) are credited when an order is delivered; 1 point = Rs 1 and points can pay for orders.
+- **Simulated where it matters**: JazzCash / Easypaisa / Card are marked paid instantly in sandbox mode, and the rider app has a *Simulate ride* button that streams fake GPS along the delivery route so live tracking can be demoed from a laptop.

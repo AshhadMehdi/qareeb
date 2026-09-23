@@ -1,22 +1,30 @@
 # dependencies
 node_modules/
+
 # builds
 dist/
 build/
+client/dist/
+server/dist/
+
 # env & secrets
 .env
-.env.*
+.env.local
+.env.*.local
 !.env.example
 server/.vapid.json
-# database & uploads (runtime data)
+
+# runtime data (local Postgres-in-WASM + uploads)
 server/data/
 server/uploads/
-*.db
-*.db-journal
-*.db-wal
-*.db-shm
+
+# vercel
+.vercel/
+
 # logs / misc
 *.log
+npm-debug.log*
 .DS_Store
 .vite/
+*.tsbuildinfo
 coverage/
