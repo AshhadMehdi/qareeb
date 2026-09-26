@@ -255,6 +255,21 @@ export default function Home() {
         </div>
       ) : null}
 
+      <section className="grid gap-2 sm:grid-cols-3" aria-label="The Qareeb promise">
+        <div className="card flex items-center gap-3 border-forest-100 bg-forest-50/70 p-3">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-forest-100 text-forest-700"><IconBolt className="h-4 w-4" /></span>
+          <div><p className="text-xs font-bold text-forest-800">Local, not far away</p><p className="text-[11px] text-ink-500">Neighbourhood shops first</p></div>
+        </div>
+        <div className="card flex items-center gap-3 border-gold-100 bg-gold-50/70 p-3">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gold-100 text-gold-600"><IconClock className="h-4 w-4" /></span>
+          <div><p className="text-xs font-bold text-forest-800">Clear arrival times</p><p className="text-[11px] text-ink-500">No vague delivery windows</p></div>
+        </div>
+        <div className="card flex items-center gap-3 border-cream-300 bg-cream-50 p-3">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-cream-200 text-forest-700"><IconRepeat className="h-4 w-4" /></span>
+          <div><p className="text-xs font-bold text-forest-800">Easy to reorder</p><p className="text-[11px] text-ink-500">Your usuals stay close</p></div>
+        </div>
+      </section>
+
       {/* Tonight's picks — the big premium cards. */}
       <Rail title="Tonight's picks" subtitle="The kitchens Abbottabad keeps going back to" action={{ label: 'See all', to: '/search' }}>
         <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">

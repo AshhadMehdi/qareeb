@@ -6,7 +6,7 @@ import tailwindcss from '@tailwindcss/vite';
 // The API is always reached through a same-origin /api path — there is no
 // VITE_API_URL anywhere in this project. In development Vite proxies to the
 // Express server; on Vercel api/index.js serves the same path.
-const apiTarget = process.env.VITE_API_PROXY ?? 'http://localhost:4000';
+const apiTarget = process.env.VITE_API_PROXY ?? `http://localhost:${process.env.PORT ?? '4000'}`;
 const hmrClientPort = process.env.HMR_CLIENT_PORT ? Number(process.env.HMR_CLIENT_PORT) : undefined;
 
 export default defineConfig({

@@ -55,6 +55,26 @@ export default function RiderDeliveries() {
         />
       </section>
 
+      <section className="card border-forest-100 bg-forest-50 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="label text-forest-600">Rider cockpit</p>
+            <h2 className="mt-1 text-lg font-bold text-forest-800">
+              {active[0] ? `Next: pick up from ${active[0].shop?.name ?? 'the shop'}.` : available[0] ? `Ready when you are: ${available.length} pickup${available.length === 1 ? '' : 's'} waiting.` : 'Your route is clear.'}
+            </h2>
+            <p className="mt-1 text-xs leading-5 text-ink-600">
+              {active[0] ? `${active[0].deliveryAddress.area ?? 'Abbottabad'} · ${distance(active[0].distanceKm)} · ${active[0].paymentMethod === 'COD' ? `${rupees(active[0].total)} to collect` : 'paid online'}` : 'Stay online to receive nearby assignments, or review your completed trips below.'}
+            </p>
+          </div>
+          {active[0] ? <Link to={`/rider/deliveries/${active[0].id}`} className="btn btn-primary text-xs">Open next delivery</Link> : null}
+        </div>
+        <div className="mt-4 grid gap-2 sm:grid-cols-3">
+          <div className="rounded-2xl bg-cream-50/80 p-3"><p className="label">Active route</p><p className="mt-1 text-sm font-bold text-forest-700">{active.length} {active.length === 1 ? 'trip' : 'trips'}</p></div>
+          <div className="rounded-2xl bg-cream-50/80 p-3"><p className="label">Cash safety</p><p className="mt-1 text-sm font-bold text-forest-700">{rupees(rider?.cashInHand ?? 0)} held</p></div>
+          <div className="rounded-2xl bg-cream-50/80 p-3"><p className="label">Rating</p><p className="mt-1 text-sm font-bold text-forest-700">★ {rider?.ratingAvg.toFixed(1) ?? '—'}</p></div>
+        </div>
+      </section>
+
       <section>
         <SectionHeading title="In progress" subtitle={`${active.length} active ${active.length === 1 ? 'trip' : 'trips'}`} />
         <div className="grid gap-3 lg:grid-cols-2">
