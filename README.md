@@ -1,43 +1,53 @@
-# Qareeb — local shops, delivered
+# Qareeb — local shops and kitchens, delivered
 
-A complete hyperlocal commerce platform inspired by *AroundYou* and built to go further: customers discover shops around them on a live map, order from **several shops in one checkout**, and watch their rider move in real time; merchants run their shop, inventory, delivery rings and riders from a dashboard; riders get a dedicated delivery app; admins oversee the whole platform.
+A complete hyperlocal commerce platform for a Pakistani city, built around one loop — **discover → decide → order → track → reorder**: customers discover shops around them on a live map, order from **several shops in one checkout**, and watch their rider move in real time; merchants run their shop, inventory, delivery rings and riders from a dashboard; riders get a dedicated delivery app; admins oversee the whole platform.
 
 Everything ships in this repo: **serverless API + PostgreSQL database + seed data + installable web app** for all four roles.
 
-> Default city is **Abbottabad, Pakistan** with realistic demo shops (karyana, sabzi mandi, meat, dairy, bakery, pharmacy…). Change it in Admin → Settings.
+> Default city is **Abbottabad, Pakistan**: ten neighbourhood shops (karyana, sabzi mandi, meat, dairy, bakery, pharmacy) plus seven kitchens (biryani, karahi, BBQ, chapli kebab, pizza, burgers, cafe). Cuisine names, PKR-first pricing, landmark-aware addresses and cash on delivery are part of the product, not decoration. Change the city in Admin → Settings.
 
 ---
 
-> **New deployment:** Vercel only. Start with [START-HERE.md](START-HERE.md). Connect Neon from the Vercel Storage tab; the first visit creates tables and demo shops. Live updates use authenticated five-second polling.
+> **Deploying:** Vercel only, from the repository root. Connect a Neon/Postgres database from the Vercel **Storage** tab (it sets `POSTGRES_URL`); the first request creates the tables and seeds the demo shops. Live updates use authenticated five-second polling — no socket server to deploy.
 
 ## Feature tour
 
 ### Customer app (`/home`)
-- **Location-aware discovery** – GPS or a saved address; shops sorted by distance / rating / delivery fee, filtered by category, "open now" and radius. List **and map view** (Leaflet + CARTO tiles) with tap-to-preview cards.
-- **Search** across shops *and* products ("milk" finds every shop that sells milk), recent searches, suggestions.
+- **Home answers three questions** – *What do I want?* (cuisine quick actions: Biryani, BBQ, Karahi, Chapli Kebab, Pizza, Burgers, Cafe & Chai, Karyana), *Where from?* (Tonight's picks as large photo posters), *What now?* (Popular right now, Ready fastest, Everything nearby).
+- **Order again** – a delivered order from any kitchen becomes one tap back into the cart.
+- **Discovery list & map** – shops sorted by distance / rating / delivery fee / time, filtered by cuisine, "open now" and radius; Leaflet + CARTO map with tap-to-preview.
+- **Search** across shops *and* dishes ("biryani" finds every kitchen that cooks it), deep-linkable via `?q=`, recent searches, suggestions.
 - **Shop page** – hero, rating, ETA, delivery fee for *your* location, out-of-zone warning, opening hours, delivery rings, reviews, grouped products with sticky category chips, live stock.
+- **Dish sheet** – tapping a dish opens the premium view: large photograph, the kitchen's description, quantity, a note for the kitchen (*less spicy, extra chutney*), and one priced action — `Add to cart · Rs 1,140` — pinned to the bottom so it never scrolls away.
 - **Multi-shop cart** – items grouped per shop, per-shop notes, quantity steppers; guests can browse and fill a cart, sign-in is asked only at checkout.
-- **Checkout** – saved addresses with map pin & reverse geocoding, live quote per shop (distance, zone, fee, free-delivery thresholds, minimum order, stock issues), promo codes, rider tips, **payment methods: Cash on delivery, JazzCash, Easypaisa, Card (sandbox) and Qareeb points wallet**, order notes. One order per shop, linked by a group id.
-- **Live tracking** – status timeline, rider on the map with smooth motion, ETA, call / WhatsApp / **in-app chat** with the rider and shop, cancel window, receipt, reorder.
-- Order history, favourites, saved addresses, loyalty **points wallet**, notification centre, **Web Push** notifications, installable **PWA** (offline shell), **dark mode** (light / dark / follow-system, with dark map tiles).
-- Email/password and **Google Sign-In** (optional).
+- **Addresses built for Pakistan** – label, house/street, area, **landmark** (*Near Ayub Medical College*, with suggestions) and delivery instructions (*call me when you're outside*). The landmark travels with the order, so the rider sees it on the tracking screen, not just a house number.
+- **Checkout in one scroll** – saved addresses with map pin & reverse geocoding, live quote per shop (distance, zone, fee, free-delivery thresholds, minimum order, stock issues), promo codes, rider tips, **schedule the delivery** (next four half-hour slots today, or tomorrow 9 am), **payment methods: Cash on delivery, JazzCash, Easypaisa, Card (sandbox) and Qareeb points wallet**, order notes. One order per shop, linked by a group id.
+- **Live tracking** – the five states people actually ask about (**order processing → rider assigned → en route → rider arriving → completed**) as a single headline plus a ring, with the full six-step history collapsed underneath. Rider card with photo-initials and call / WhatsApp / chat, a **Delivering to** card that leads with the landmark, rider on the map with smooth motion, ETA, cancel window, receipt, reorder.
+- **Refer & earn** – every account gets a shareable invite code (`ALI-XXXX`, also accepted as `?ref=` on signup). Both sides are rewarded in points once the invited friend's **first order is delivered**; *Invite friends* shows invited / converted / earned.
+- **Help centre** – open a support ticket from your orders or account, priority + topic, chat it through with the platform team, close it when solved.
+- Order history, favourites, saved addresses, loyalty **points wallet**, notification centre, installable **PWA** (offline shell; web-push subscriptions are accepted by the API).
+- Email/password sign-in, or browse without an account and sign in at checkout.
 
 ### Merchant dashboard (`/merchant`)
 - 3-step **shop setup wizard** (details → map location → hours) with sensible default delivery rings.
 - **Overview** – today's sales, pending orders, revenue chart, orders by status, top products, low-stock alerts, one-tap *pause shop*.
 - **Orders** – new orders ring a bell in real time; accept / reject with reason, preparing → ready, assign a rider (own team or **auto-assign nearest by distance + workload**), self-deliver fallback, chat with the customer, printable receipt.
-- **Products** – photos (upload) or emoji, categories, units, prices & compare-at prices, inline stock +/- and visibility switches, featured items.
+- **Products** – icon/emoji badge, categories, units, prices & compare-at prices, inline stock +/- and visibility switches, featured items.
 - **Shop settings** – details & branding, opening hours per weekday, **ring-based delivery zones** (radius → fee, free-above threshold) with a live map preview.
 - **Riders** – build your own team by email, see platform riders nearby, online status and workload.
 - **Promo codes** – percent / fixed / free delivery, min order, caps, expiry, usage limits.
+- **Payouts** – a running wallet of delivered sales minus platform commission, with JazzCash / Easypaisa / bank withdrawal requests (minimum Rs 500), status history and the admin's note on each settlement.
 
 ### Rider app (`/runner`)
 - Online/offline switch, live GPS streaming (throttled) to customers & shops, earnings today / week / month + chart, tips.
 - Delivery detail with pickup & drop-off cards, navigation deep-links, call / WhatsApp / chat, cash-to-collect banner, *picked up* → *delivered* flow, decline before pickup.
+- **Earnings & payouts** – delivery fees + tips minus cash still in hand, with withdrawal requests and settlement history.
 - Demo mode: **"Simulate ride"** button animates a fake GPS trip so live tracking can be demoed on a laptop.
 
 ### Admin console (`/admin`)
 - Platform stats (GMV, revenue, users, riders online), 14-day charts, **live map** of shops and moving riders.
+- **Payout desk** – every merchant and rider withdrawal request in one queue with totals, approve → mark paid (or reject with a note); each decision is audited and pushes a notification to the wallet owner.
+- **Support inbox** – all customer tickets with priority badges and status counts, reply in the thread or resolve it; ticket activity lands in the audit log.
 - Approve / suspend shops, manage users (roles, wallet points, disable), browse & intervene in any order, platform settings (service fee, commission, loyalty rate, radius cap, cancel window, city), platform-wide promos, **broadcast announcements**.
 
 ---
@@ -48,18 +58,21 @@ Everything ships in this repo: **serverless API + PostgreSQL database + seed dat
 |---|---|
 | Server | Node 22, **Express 5**, TypeScript (ESM), zod validation, JWT + bcrypt, web-push (VAPID), multer uploads, helmet/cors/rate-limit |
 | Database | **PostgreSQL** + **Drizzle ORM**. Vercel Storage (Neon) or any `DATABASE_URL`/`POSTGRES_URL`. Local development uses PGlite. Schema is applied automatically. |
-| Client | **Vite 6 + React 19 + TypeScript**, Tailwind CSS v4, React Router 7, TanStack Query, Zustand (persisted cart/auth/location), react-leaflet, framer-motion, recharts, sonner |
+| Client | **Vite 7 + React 19 + TypeScript**, Tailwind CSS v4, React Router 7, TanStack Query, Zustand (persisted cart/auth/location), react-leaflet, recharts, sonner |
 | Realtime | Durable, authorized HTTP event polling every 5 seconds (while visible): order events, chat, rider GPS |
 | PWA | Web manifest + hand-written service worker (app-shell cache, push, notification click routing) |
-| Theming | Tailwind v4 CSS variables remapped under `html.dark` (no per-class `dark:` variants); theme persisted in `localStorage` and applied pre-paint |
+| Theming | Tailwind v4 `@theme` tokens — cream paper + forest green, Fraunces on the hero greeting only, Plus Jakarta Sans everywhere else |
 
 ### Repo layout
 ```
-api/       Vercel function entry point
-server/    Express API, Drizzle PostgreSQL schema, seed data
-client/    React app (customer / merchant / rider / admin)
-supabase/  Auto-applied schema (optional extra SQL kept for reference)
-scripts/   Deployment tests and downloadable source packaging
+api/       Vercel function entry point (lazy-imports server/dist/serverless.js)
+server/    Express API, Drizzle PostgreSQL schema, applied SQL, seed data
+client/    React app (customer / merchant / rider / admin) + PWA assets
+client/public/images/   dish and shop photography used across the customer app
+scripts/   dev.mjs — starts the API and the web app together
+server/sql/schema.sql   generated, idempotent — applied once per boot
+                        (CREATE TABLE IF NOT EXISTS + ADD COLUMN IF NOT EXISTS,
+                        so a schema change upgrades an existing database in place)
 ```
 
 ---
@@ -80,10 +93,13 @@ Password for local and hosted demo accounts: `password123` (also shown on the lo
 | Customer | `ali@demo.com` | has live orders, addresses, points |
 | Customer | `sara@demo.com`, `hassan@demo.com` | |
 | Merchant | `madina@demo.com` | Al-Madina Karyana Store (also `sabzi@`, `kakul@`, `mart@`, `roshan@`, `sehat@`, `doodh@`, `fruit@`, `shahzad@`, `amc@demo.com`) |
+| Kitchen | `biryani@demo.com` | Biryani Express (also `shinwari@`, `khyber@`, `chapli@`, `pizzapoint@`, `burgerlab@`, `chaikhana@demo.com`) |
 | Rider | `rider1@demo.com` … `rider4@demo.com` | rider1 is mid-delivery |
 | Admin | `admin@qareeb.app` | |
 
 Promo codes to try: `WELCOME50` (Rs 50 off ≥ Rs 500), `FREESHIP` (≥ Rs 800), `MADINA10`, `SWEET15`.
+
+The seed also leaves a settlement queue and a support inbox to poke at: **Kamran Yousaf** (rider2) has a pending withdrawal request, **Al-Madina** a paid one, two support tickets (one from a customer, one from a merchant) sit in the admin inbox, and **Roshan Bakery** has a delivery scheduled for 9 am tomorrow.
 
 ### Try the full flow in 2 minutes
 1. Sign in as **Ali**, open a shop, add items, checkout with JazzCash + a tip.
@@ -101,7 +117,8 @@ Promo codes to try: `WELCOME50` (Rs 50 off ≥ Rs 500), `FREESHIP` (≥ Rs 800),
 | `npm start` | production server – serves the API **and** the built web app on one port |
 | `npm run typecheck` | `tsc --noEmit` for both workspaces |
 | `npm run db:seed` / `npm run db:reset` | seed demo data / wipe and reseed |
-| `npm run db:push` | push the Drizzle schema without migrations (dev only) |
+| `npm run dev:api` / `npm run dev:web` | run just the API or just the web app |
+| `npm run db:generate-schema` | not a script — `cd server && node scripts/sync-schema-sql.mjs` regenerates `server/sql/schema.sql` from the Drizzle schema |
 
 ## Configuration
 Copy `server/.env.example` → `server/.env` (and optionally `client/.env.example` → `client/.env.local`). Key variables:
@@ -110,41 +127,75 @@ Copy `server/.env.example` → `server/.env` (and optionally `client/.env.exampl
 - `GOOGLE_CLIENT_ID` – enables the Google Sign-In button (client reads it from `/api/config`).
 - `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` – Web Push keys; required for push on Vercel (otherwise disabled). Generated locally during development.
 - `DATABASE_URL` or `POSTGRES_URL` – hosted PostgreSQL. Vercel Storage (Neon) sets this automatically. Omit only for local PGlite development.
-- `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` – optional image storage; images otherwise live in Postgres.
 - `CORS_ORIGINS` – extra origins when the client is hosted separately.
 
-## Production deploy
+## Deploy to Vercel
 
-**Vercel only.** Frontend and API deploy from the repository root. Create a Neon/Postgres database from the Vercel **Storage** tab and connect it to the project. Do not set `VITE_API_URL`. Do not set Root Directory to `client`.
+Everything (static app + API) deploys as **one project from the repository root**. There is no second service and no `VITE_API_URL` — the client calls `/api` on its own origin.
 
-Read **[START-HERE.md](START-HERE.md)**. The first request creates tables and demo shops automatically.
+**1. Get the code onto the branch Vercel builds.** Vercel builds `main` by default, and this work lives on `arena/01a0cdf6-qareeb`. Either merge that branch into `main` (there is a pull request open for it) or, in Vercel, set *Settings → Git → Production Branch* to `arena/01a0cdf6-qareeb`.
 
-```sh
-npm ci --include=dev
-npm run typecheck
-npm run build
-npm run test:deploy
+**2. Import the project.** <https://vercel.com/new> → import `AshhadMehdi/qareeb`. Leave **Root Directory** at the repository root — `vercel.json` already sets the framework preset to other, the install command to `npm ci --include=dev` (the build needs `typescript` and `vite` from devDependencies) and the output directory to `client/dist`.
+
+**3. Add the database.** Project → **Storage** → **Create Database** → **Neon (Postgres)** → connect it to the project. That sets `POSTGRES_URL`, which the API picks up automatically. Any Postgres works: set `DATABASE_URL` instead if you bring your own.
+
+**4. Set the environment variables you want** (Project → Settings → Environment Variables, then redeploy):
+
+| Variable | Needed? | Why |
+|---|---|---|
+| `POSTGRES_URL` | automatic | Set by the Neon integration. The API also reads `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `NEON_DATABASE_URL`, or `PGHOST`/`PGUSER`/`PGPASSWORD`. |
+| `JWT_SECRET` | recommended | 32+ random characters. Without it Vercel derives a stable secret from the database URL, which means anyone who knows your database URL can mint tokens. |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | optional | Enables web push. Push is simply disabled without them. |
+| `GOOGLE_CLIENT_ID` | optional | Turns on the Google sign-in button. |
+| `DEMO_PASSWORD` | optional | Password for the seeded demo accounts (default `password123`). |
+| `AUTO_SEED` | optional | Default `true`: the first request creates the tables *and* the Abbottabad demo data. Set `false` for an empty store. |
+
+Do **not** set `VITE_API_URL`, and do not set the Root Directory to `client`.
+
+**5. Deploy, then hit the API once.** The very first request creates the schema and seeds the demo data, so it takes a few seconds; every request after that is normal. Check `https://<your-app>.vercel.app/api/health`:
+
+```json
+{ "ok": true, "database": { "connected": true, "driver": "postgres" } }
 ```
 
-Hosted signup and quota requirements can change; free hosting is not guaranteed for commercial use. Real payments, backups, removal of demo users and a production security review are required before launching to real customers.
+If you instead get `{ "ok": false, "setup": true, ... }`, the database is not connected to the project yet — connect Neon and redeploy. Then open the site and sign in with `ali@demo.com` / `password123`.
+
+### What was verified before writing this
+
+- `npm ci --include=dev` (the exact install command, `--dry-run`) succeeds against the committed lockfile.
+- `npm run build` produces `client/dist` (3.3 MB, including `/images/*.jpg`, `sw.js`, the manifest and icons) and `server/dist`.
+- The **compiled** server boots, creates its schema and seeds demo data with the source tree absent — the same situation as the Vercel function bundle, which ships only `server/dist/**` plus `server/sql/**`. (The compiled build reads `server/dist/sql/schema.sql`; resolving only the source path is a cold-start `503` waiting to happen, which is why `bootstrap.ts` now tries both.)
+- `api/index.js` returns a readable `503 { ok: false, setup: true }` when no database is connected, instead of a stack trace.
+
+### Before real customers
+
+This is a working demo, not a launch: it ships demo users with a known password, sandbox payment gateways (no real JazzCash/Easypaisa merchant account), no backups or monitoring, and free hosting tiers that are not meant for commercial traffic. Replace the seed accounts, wire a real gateway, add backups and a security review first.
 
 ## API overview
 All endpoints are under `/api`, JSON in/out, `Authorization: Bearer <jwt>`. Errors are `{ "error": "message" }`.
 
 - `realtime`: authenticated event feed (no WebSocket server)
 - `auth`: register, login, google, me, change-password
-- `users/me`: profile, addresses, favorites, notifications, push subscriptions, wallet
-- `shops`: nearby search (`lat, lng, radius, q, category, sort, openNow`), categories, featured, detail (products, reviews, zones)
+- `users/me`: profile, addresses, favorites, notifications, push subscriptions, wallet, **referral stats, payout wallet & requests, support tickets**
+- `shops`: nearby search (`lat, lng, radius, q, category, sort, openNow`), categories, featured (`limit`), **popular** (round-robin across shops by real 21-day order volume), detail (products, reviews, zones)
 - `orders`: quote, checkout (multi-shop), list, detail, cancel, review, messages
 - `merchant`: shop, zones, products (+bulk), orders & status, assign runner (`runnerId | "auto"`), runners, promos, analytics
 - `runner`: profile, location, deliveries & status, decline, earnings
-- `admin`: stats, shops, users, orders, settings, promos, broadcast
-- `uploads`: multipart image upload → `/api/uploads/:id` (Postgres) or optional Supabase Storage; local `/uploads/...` during development
+- `admin`: stats, shops, users, orders, settings, promos, broadcast, **payouts (approve / pay / reject), support tickets (reply / status)**
+- `uploads`: multipart image upload → `/api/uploads/:id` (stored in Postgres)
 - Event feed: `order:created`, `order:updated`, `notification`, `chat:message`, `runner:location`, `shop:updated`
 
 ## Design notes
+- **Design system**: warm ivory paper, deep emerald `#063B2D` for brand and primary actions, muted gold `#C8A45D` for ratings and a single badge, charcoal `#191919` text. Green is an accent, not the wallpaper; the food photography carries the visual weight, and one faint jaali motif is the only ornament. Fraunces appears solely in the hero greeting, Plus Jakarta Sans everywhere else.
+- **Card hierarchy**: a shop card is photo, name, `⭐ rating · cuisine`, delivery window and fee, plus at most one badge (Popular / Free delivery / No minimum). Product tiles are photo, name, price, one add button.
+- **Bottom navigation**: Home, Search, Favourites, Orders, Profile. The cart is contextual — it appears as a bar the moment the cart has something in it.
+- **Delivery windows** are prep time + ride time, so a bakery and a karahi house quote honestly different times.
+- **Landmarks first**: the address form asks for the landmark your rider will actually recognise and offers common Abbottabad ones; it is stored on the address and copied onto the order snapshot at checkout.
 - **Delivery rings**: each shop defines up to 6 concentric rings (`radiusKm → fee, freeAbove`). The first ring that reaches the customer sets the fee; beyond the largest ring the shop is shown but not deliverable.
 - **Order lifecycle**: `PENDING → ACCEPTED → PREPARING → READY → ON_THE_WAY → DELIVERED` (+ `CANCELLED`). Transitions are validated per role on the server; customers can cancel while pending or within a configurable window after acceptance; cancellations restock items and refund online/wallet payments.
 - **Auto-assign** scores riders by distance to the shop, current load and whether they belong to the shop's team.
+- **Money**: merchants are owed delivered subtotals minus commission; riders are owed delivery fees + tips minus the cash they still hold from COD orders. Both wallets are derived from the order ledger, not stored balances, so a payout can never exceed what was actually earned. Withdrawals live as `PENDING → APPROVED → PAID` (or `REJECTED`) requests that only an admin can advance.
+- **Scheduled orders** are normal orders with a `scheduledFor` timestamp: they reach the shop immediately, are tagged in the merchant queue and keep their slot through checkout.
 - **Payments** other than COD are simulated (marked paid instantly) — swap in a JazzCash/Easypaisa/Stripe gateway inside `placeOrders()`.
-- **Loyalty**: a configurable % of the subtotal is credited as points when an order is delivered; points can pay for orders.
+- **Loyalty**: 2 points per Rs 100 (configurable) are credited when an order is delivered; 1 point = Rs 1 and points can pay for orders.
+- **Simulated where it matters**: JazzCash / Easypaisa / Card are marked paid instantly in sandbox mode, and the rider app has a *Simulate ride* button that streams fake GPS along the delivery route so live tracking can be demoed from a laptop.

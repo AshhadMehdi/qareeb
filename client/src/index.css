@@ -1,0 +1,266 @@
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   Qareeb design system — 80% modern product UI, 20% Pakistani identity.
+
+   Warm ivory paper, deep emerald for brand and primary actions, muted gold for
+   ratings and a single badge, charcoal text. The Pakistani signal comes from
+   the food, the cuisine words and the address handling — not from ornament.
+   Fraunces is reserved for the hero greeting; Plus Jakarta Sans covers the rest.
+--------------------------------------------------------------------------- */
+@theme {
+  /* Warm ivory base — most of the screen is this. */
+  --color-cream-50: #fcfaf6;
+  --color-cream-100: #f7f2e8;
+  --color-cream-200: #efe8da;
+  --color-cream-300: #e4d9c4;
+  --color-cream-400: #d3c2a1;
+
+  /* Deep emerald #063B2D sits at 800: it is the brand, not the wallpaper.
+     Buttons, active states and the logo use 600–800; surfaces stay ivory. */
+  --color-forest-50: #eef4f1;
+  --color-forest-100: #d8e6df;
+  --color-forest-200: #a9c6ba;
+  --color-forest-300: #79a493;
+  --color-forest-400: #47836c;
+  --color-forest-500: #1e6349;
+  --color-forest-600: #0f4f39;
+  --color-forest-700: #0a4432;
+  --color-forest-800: #063b2d;
+  --color-forest-900: #04241c;
+
+  /* Near-black charcoal for text. */
+  --color-ink-500: #6e6a61;
+  --color-ink-700: #3a3833;
+  --color-ink-900: #191919;
+
+  /* Muted gold — ratings, small accents, one badge. Never a gradient. */
+  --color-gold-50: #fbf6ea;
+  --color-gold-100: #f3e7cc;
+  --color-gold-200: #e7d2a4;
+  --color-gold-300: #d9bc7c;
+  --color-gold-400: #c8a45d;
+  --color-gold-500: #b08c42;
+  --color-gold-600: #8c6e31;
+
+  /* Alerts only. */
+  --color-clay-100: #f7e7dc;
+  --color-clay-500: #b4552a;
+  --color-clay-600: #96431f;
+
+  --color-wheat-100: #f3e7cc;
+  --color-wheat-500: #b08c42;
+
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+
+  --radius-card: 1.15rem;
+  --shadow-paper: 0 1px 2px rgba(25, 25, 25, 0.04), 0 10px 30px -22px rgba(6, 59, 45, 0.35);
+}
+
+/* ---------------------------------------------------------------------------
+   Qareeb design system — 80% modern product UI, 20% Pakistani identity.
+
+   Ivory paper, deep emerald, restrained gold, charcoal text. The Pakistani
+   signal comes from the food, the cuisine words and the address handling —
+   not from ornament. Fraunces is still reserved for the hero greeting.
+--------------------------------------------------------------------------- */
+
+@layer utilities {
+  /* A faint eight-point jaali, the one decorative motif in the product. */
+  .pattern-jaali {
+    background-image:
+      radial-gradient(circle at 50% 50%, rgba(200, 164, 93, 0.16) 1.5px, transparent 1.6px),
+      linear-gradient(45deg, transparent 46%, rgba(6, 59, 45, 0.05) 47%, rgba(6, 59, 45, 0.05) 53%, transparent 54%),
+      linear-gradient(-45deg, transparent 46%, rgba(6, 59, 45, 0.05) 47%, rgba(6, 59, 45, 0.05) 53%, transparent 54%);
+    background-size: 22px 22px, 22px 22px, 22px 22px;
+  }
+
+  .hero-wash {
+    background:
+      radial-gradient(120% 90% at 12% 0%, rgba(6, 59, 45, 0.06) 0%, transparent 60%),
+      radial-gradient(90% 80% at 100% 10%, rgba(200, 164, 93, 0.14) 0%, transparent 55%);
+  }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { scrollbar-width: none; }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-cream-100);
+    color: var(--color-ink-900);
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv11', 'ss01';
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* The only place Fraunces appears is the hero greeting. */
+  .font-display {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-forest-500);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .card {
+    background-color: var(--color-cream-50);
+    border: 1px solid var(--color-cream-300);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-paper);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.85rem;
+    padding: 0.65rem 1.1rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    line-height: 1.1;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .btn-primary {
+    background-color: var(--color-forest-600);
+    color: var(--color-cream-50);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--color-forest-700);
+  }
+
+  .btn-ghost {
+    background-color: transparent;
+    border-color: var(--color-cream-300);
+    color: var(--color-forest-700);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background-color: var(--color-cream-200);
+  }
+
+  .btn-quiet {
+    background-color: var(--color-cream-200);
+    color: var(--color-ink-900);
+  }
+  .btn-quiet:hover:not(:disabled) {
+    background-color: var(--color-cream-300);
+  }
+
+  .input {
+    width: 100%;
+    border-radius: 0.85rem;
+    border: 1px solid var(--color-cream-300);
+    background-color: var(--color-cream-50);
+    padding: 0.65rem 0.9rem;
+    font-size: 0.925rem;
+  }
+  .input::placeholder {
+    color: var(--color-ink-500);
+  }
+  .input:focus {
+    border-color: var(--color-forest-400);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--color-forest-50);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-cream-300);
+    background-color: var(--color-cream-50);
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .chip-active {
+    background-color: var(--color-forest-600);
+    border-color: var(--color-forest-600);
+    color: var(--color-cream-50);
+  }
+
+  .label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-500);
+  }
+
+  .row-divider {
+    border-top: 1px solid var(--color-cream-200);
+  }
+}
+
+@layer utilities {
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Room for the bottom navigation on phones. */
+  .pb-safe-nav {
+    padding-bottom: calc(4.9rem + env(safe-area-inset-bottom));
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Leaflet needs a paper-toned base so the map matches the app. */
+.leaflet-container {
+  background: var(--color-cream-200);
+  font-family: var(--font-sans);
+}
+.leaflet-control-attribution {
+  background: rgba(253, 251, 246, 0.85) !important;
+  color: var(--color-ink-500) !important;
+  font-size: 10px !important;
+}
+.leaflet-bar a {
+  color: var(--color-forest-700) !important;
+}
+.qareeb-pin {
+  display: grid;
+  place-items: center;
+  border-radius: 999px 999px 999px 4px;
+  transform: rotate(-45deg);
+  border: 2px solid var(--color-cream-50);
+  box-shadow: 0 6px 14px -8px rgba(16, 46, 34, 0.9);
+  font-size: 13px;
+}
+.qareeb-pin > span {
+  transform: rotate(45deg);
+}
