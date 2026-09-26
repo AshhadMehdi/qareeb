@@ -12,7 +12,7 @@ import Orders from './pages/customer/Orders';
 import OrderTracking from './pages/customer/OrderTracking';
 import Search from './pages/customer/Search';
 import Account from './pages/customer/Account';
-import { Addresses, Favorites, Notifications, Wallet } from './pages/customer/AccountSub';
+import { Addresses, Favorites, Notifications, Referrals, Support, Wallet } from './pages/customer/AccountSub';
 import MerchantOverview from './pages/merchant/Overview';
 import MerchantOrders from './pages/merchant/Orders';
 import MerchantProducts from './pages/merchant/Products';
@@ -30,6 +30,9 @@ import AdminOrders from './pages/admin/AdminOrders';
 import AdminMarketing from './pages/admin/Marketing';
 import AdminSettings from './pages/admin/Settings';
 import AdminAudit from './pages/admin/Audit';
+import AdminPayouts from './pages/admin/Payouts';
+import AdminSupport from './pages/admin/Support';
+import MerchantPayouts from './pages/merchant/Payouts';
 import { homeForRole, useAuth } from './store/auth';
 
 function ShellLayout() {
@@ -123,6 +126,22 @@ export default function App() {
           }
         />
         <Route
+          path="/account/refer"
+          element={
+            <RequireAuth>
+              <Referrals />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/support"
+          element={
+            <RequireAuth>
+              <Support />
+            </RequireAuth>
+          }
+        />
+        <Route
           path="/favorites"
           element={
             <RequireAuth>
@@ -176,6 +195,16 @@ export default function App() {
             <RequireAuth>
               <RequireRole roles={['MERCHANT', 'ADMIN']}>
                 <MerchantShop />
+              </RequireRole>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/merchant/payouts"
+          element={
+            <RequireAuth>
+              <RequireRole roles={['MERCHANT', 'ADMIN']}>
+                <MerchantPayouts />
               </RequireRole>
             </RequireAuth>
           }
@@ -300,6 +329,26 @@ export default function App() {
             <RequireAuth>
               <RequireRole roles={['ADMIN']}>
                 <AdminSettings />
+              </RequireRole>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/payouts"
+          element={
+            <RequireAuth>
+              <RequireRole roles={['ADMIN']}>
+                <AdminPayouts />
+              </RequireRole>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/support"
+          element={
+            <RequireAuth>
+              <RequireRole roles={['ADMIN']}>
+                <AdminSupport />
               </RequireRole>
             </RequireAuth>
           }

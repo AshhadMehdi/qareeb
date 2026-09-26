@@ -128,6 +128,27 @@ export const registerSchema = z.object({
   phone: phoneSchema.nullish(),
   password: passwordSchema,
   role: z.enum(['CUSTOMER', 'MERCHANT', 'RIDER']).default('CUSTOMER'),
+  /** optional invite code from a friend */
+  referralCode: z.string().trim().max(24).nullish(),
+});
+
+export const payoutRequestSchema = z.object({
+  amount: z.number().min(1).max(1_000_000),
+  method: z.enum(['JAZZCASH', 'EASYPAISA', 'BANK']).default('JAZZCASH'),
+  accountTitle: z.string().trim().min(2).max(80),
+  accountNumber: z.string().trim().min(5).max(40),
+});
+
+export const ticketSchema = z.object({
+  subject: z.string().trim().min(3).max(120),
+  category: z.enum(['ORDER', 'PAYMENT', 'DELIVERY', 'ACCOUNT', 'OTHER']).default('OTHER'),
+  body: z.string().trim().min(5).max(1000),
+  orderId: z.string().trim().max(40).nullish(),
+  priority: z.enum(['low', 'normal', 'high']).default('normal'),
+});
+
+export const ticketReplySchema = z.object({
+  body: z.string().trim().min(1).max(1000),
 });
 
 export const loginSchema = z.object({

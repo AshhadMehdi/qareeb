@@ -112,3 +112,19 @@ export const IconChat = ({ className = base }: IconProps) => (
     <path d="M4 5h16v11H9l-5 4z" />
   </svg>
 );
+
+export const IconWallet = ({ className = base }: IconProps) => (
+  <svg viewBox="0 0 24 24" className={className} {...common}>
+    <path d="M3 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    <path d="M3 10h18" />
+    <circle cx="16.5" cy="14" r="1.1" />
+  </svg>
+);
+
+export const IconGift = ({ className = base }: IconProps) => (
+  <svg viewBox="0 0 24 24" className={className} {...common}>
+    <path d="M4 11h16v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z" />
+    <path d="M3 8h18v3H3zM12 8v13" />
+    <path d="M12 8S10.5 3.5 8 4.5 9 8 12 8s4-1.5 2.5-3.5C12.5 3.5 12 8 12 8z" />
+  </svg>
+);

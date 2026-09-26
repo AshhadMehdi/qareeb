@@ -573,3 +573,158 @@ export function useAdminMutations() {
     }),
   };
 }
+
+/* earnings wallet, referrals and support ----------------------------------- */
+
+export type Payout = {
+  id: string;
+  role: string;
+  shopId: string | null;
+  amount: number;
+  method: 'JAZZCASH' | 'EASYPAISA' | 'BANK';
+  accountTitle: string;
+  accountNumber: string;
+  status: 'PENDING' | 'APPROVED' | 'PAID' | 'REJECTED';
+  note: string | null;
+  decidedAt: string | null;
+  createdAt: string;
+};
+
+export type WalletSummary = {
+  earned: number;
+  commission: number;
+  tips: number;
+  cashInHand: number;
+  paidOut: number;
+  pending: number;
+  available: number;
+  minPayout: number;
+  payouts: Payout[];
+};
+
+export function useMyWallet() {
+  const token = useAuth((state) => state.token);
+  return useQuery({
+    queryKey: ['wallet', 'payouts'],
+    queryFn: () => apiGet<{ role: string; shopId: string | null; wallet: WalletSummary }>('/users/me/payouts'),
+    enabled: Boolean(token),
+  });
+}
+
+export function useRequestPayout() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { amount: number; method: string; accountTitle: string; accountNumber: string }) =>
+      apiPost<{ payout: Payout; available: number }>('/users/me/payouts', body),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['wallet'] }),
+  });
+}
+
+export function useReferral() {
+  const token = useAuth((state) => state.token);
+  return useQuery({
+    queryKey: ['referral'],
+    queryFn: () =>
+      apiGet<{
+        code: string;
+        reward: { referrer: number; referee: number };
+        invited: { id: string; name: string; joinedAt: string; credited: boolean }[];
+        stats: { invited: number; converted: number; earned: number };
+      }>('/users/me/referral'),
+    enabled: Boolean(token),
+  });
+}
+
+export type SupportTicket = {
+  id: string;
+  orderId: string | null;
+  subject: string;
+  category: string;
+  priority: string;
+  status: 'OPEN' | 'ANSWERED' | 'RESOLVED';
+  createdAt: string;
+  updatedAt: string;
+  name?: string | null;
+  email?: string | null;
+  role?: string | null;
+  messages: { id: string; authorId: string; authorName: string | null; authorRole: string; body: string; createdAt: string }[];
+};
+
+export function useMyTickets() {
+  const token = useAuth((state) => state.token);
+  return useQuery({
+    queryKey: ['tickets'],
+    queryFn: () => apiGet<{ tickets: SupportTicket[]; open: number }>('/users/me/tickets'),
+    enabled: Boolean(token),
+  });
+}
+
+export function useTicketMutations() {
+  const queryClient = useQueryClient();
+  const invalidate = () => void queryClient.invalidateQueries({ queryKey: ['tickets'] });
+  return {
+    create: useMutation({
+      mutationFn: (body: { subject: string; body: string; category?: string; orderId?: string | null; priority?: string }) =>
+        apiPost('/users/me/tickets', body),
+      onSuccess: invalidate,
+    }),
+    reply: useMutation({
+      mutationFn: ({ id, body }: { id: string; body: string }) => apiPost(`/users/me/tickets/${id}/reply`, { body }),
+      onSuccess: invalidate,
+    }),
+  };
+}
+
+export function useAdminPayouts(status = 'ALL') {
+  const token = useAuth((state) => state.token);
+  return useQuery({
+    queryKey: ['admin', 'payouts', status],
+    queryFn: () =>
+      apiGet<{
+        payouts: (Payout & { name: string | null; email: string | null; phone: string | null; shopName: string | null })[];
+        totals: { status: string; sum: number; count: number }[];
+      }>(`/admin/payouts?status=${status}`),
+    enabled: Boolean(token),
+  });
+}
+
+export function useAdminPayMutations() {
+  const queryClient = useQueryClient();
+  return {
+    decide: useMutation({
+      mutationFn: ({ id, status, note }: { id: string; status: 'APPROVED' | 'PAID' | 'REJECTED'; note?: string }) =>
+        apiPost(`/admin/payouts/${id}/status`, { status, note }),
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: ['admin', 'payouts'] });
+        void queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      },
+    }),
+  };
+}
+
+export function useAdminTickets(status = 'ALL') {
+  const token = useAuth((state) => state.token);
+  return useQuery({
+    queryKey: ['admin', 'tickets', status],
+    queryFn: () =>
+      apiGet<{ tickets: SupportTicket[]; counts: { open: number; answered: number; resolved: number; high: number } }>(
+        `/admin/tickets?status=${status}`,
+      ),
+    enabled: Boolean(token),
+  });
+}
+
+export function useAdminTicketMutations() {
+  const queryClient = useQueryClient();
+  const invalidate = () => void queryClient.invalidateQueries({ queryKey: ['admin', 'tickets'] });
+  return {
+    reply: useMutation({
+      mutationFn: ({ id, body }: { id: string; body: string }) => apiPost(`/admin/tickets/${id}/reply`, { body }),
+      onSuccess: invalidate,
+    }),
+    setStatus: useMutation({
+      mutationFn: ({ id, status }: { id: string; status: string }) => apiPost(`/admin/tickets/${id}/status`, { status }),
+      onSuccess: invalidate,
+    }),
+  };
+}

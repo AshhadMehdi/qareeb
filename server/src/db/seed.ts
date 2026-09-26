@@ -7,7 +7,7 @@
  * something to chart. `npm run db:seed` re-runs it; `npm run db:reset` wipes
  * first. Passwords come from DEMO_PASSWORD (default: password123).
  */
-import { sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { env } from '../env.js';
 import { getDb } from '../db/client.js';
 import {
@@ -31,8 +31,11 @@ import {
   runnerProfiles,
   serviceAreas,
   settings,
+  payoutRequests,
   shopRunners,
   shops,
+  supportTickets,
+  ticketMessages,
   users,
   type DeliveryAddressSnapshot,
   type OrderStatus,
@@ -393,11 +396,13 @@ const SHOPS: SeedShop[] = [
   },
 ];
 
+// `cash` is the COD money a rider has collected but not handed over yet. Kamran
+// (rider2) settled up yesterday, which is why he has a payable balance.
 const RIDERS = [
-  { email: 'rider1@demo.com', name: 'Bilal Khan', lat: 34.1662, lng: 73.2271, vehicle: 'bike' as const, deliveries: 486, rating: 4.8 },
-  { email: 'rider2@demo.com', name: 'Kamran Yousaf', lat: 34.1589, lng: 73.2203, vehicle: 'bike' as const, deliveries: 372, rating: 4.7 },
-  { email: 'rider3@demo.com', name: 'Naveed Akhtar', lat: 34.1548, lng: 73.2187, vehicle: 'bike' as const, deliveries: 214, rating: 4.6 },
-  { email: 'rider4@demo.com', name: 'Zubair Shah', lat: 34.1721, lng: 73.2381, vehicle: 'car' as const, deliveries: 96, rating: 4.5 },
+  { email: 'rider1@demo.com', name: 'Bilal Khan', lat: 34.1662, lng: 73.2271, vehicle: 'bike' as const, deliveries: 486, rating: 4.8, cash: 3750 },
+  { email: 'rider2@demo.com', name: 'Kamran Yousaf', lat: 34.1589, lng: 73.2203, vehicle: 'bike' as const, deliveries: 372, rating: 4.7, cash: 0 },
+  { email: 'rider3@demo.com', name: 'Naveed Akhtar', lat: 34.1548, lng: 73.2187, vehicle: 'bike' as const, deliveries: 214, rating: 4.6, cash: 300 },
+  { email: 'rider4@demo.com', name: 'Zubair Shah', lat: 34.1721, lng: 73.2381, vehicle: 'car' as const, deliveries: 96, rating: 4.5, cash: 850 },
 ];
 
 const CUSTOMERS = [
@@ -430,6 +435,7 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<void> {
       truncate table
         ${realtimeEvents}, ${pushSubscriptions}, ${refreshTokens}, ${messages}, ${orderEvents},
         ${orderItems}, ${paymentTransactions}, ${reviews}, ${favorites}, ${notifications},
+        ${ticketMessages}, ${supportTickets}, ${payoutRequests},
         ${shopRunners}, ${deliveryZones}, ${products}, ${orders}, ${shops},
         ${runnerProfiles}, ${addresses}, ${auditLogs}, ${campaigns}, ${serviceAreas}, ${users}, ${settings}
       restart identity cascade
@@ -484,7 +490,7 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<void> {
       ratingAvg: rider.rating,
       ratingCount: Math.round(rider.deliveries / 4),
       totalDeliveries: rider.deliveries,
-      cashInHand: Math.round(between(0, 4000) / 50) * 50,
+      cashInHand: rider.cash,
       createdAt: now,
     })),
   );
@@ -689,6 +695,73 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<void> {
     },
   ]);
 
+  /* referrals, wallets and support tickets --------------------------------- */
+
+  // every seeded account owns a share code; Hassan was invited by Ali and his
+  // first order is already delivered, so the reward shows as converted.
+  const seededCodes = await import('../lib/referral.js');
+  for (const id of userIdByEmail.values()) await seededCodes.ensureReferralCode(id);
+
+  const [aliRow] = await db.select().from(users).where(eq(users.id, customerIds['ali@demo.com']!)).limit(1);
+  await db
+    .update(users)
+    .set({ referredBy: aliRow?.referralCode ?? null, referralCreditedAt: iso(9, 19) })
+    .where(eq(users.id, customerIds['hassan@demo.com']!));
+
+  const ticketAt = iso(2, 13);
+  const ticketOne = newId();
+  const ticketTwo = newId();
+  await db.insert(supportTickets).values([
+    {
+      id: ticketOne,
+      userId: customerIds['sara@demo.com']!,
+      orderId: null,
+      subject: 'Doodh ka packet phata hua aaya',
+      category: 'ORDER',
+      priority: 'high',
+      status: 'ANSWERED',
+      createdAt: ticketAt,
+      updatedAt: iso(2, 15),
+    },
+    {
+      id: ticketTwo,
+      userId: userIdByEmail.get('roshan@demo.com')!,
+      orderId: null,
+      subject: 'Payout account number update karna hai',
+      category: 'PAYMENT',
+      priority: 'normal',
+      status: 'OPEN',
+      createdAt: iso(0, 11),
+      updatedAt: iso(0, 11),
+    },
+  ]);
+  await db.insert(ticketMessages).values([
+    {
+      id: newId(),
+      ticketId: ticketOne,
+      authorId: customerIds['sara@demo.com']!,
+      authorRole: 'CUSTOMER' as UserRole,
+      body: 'Milk packet phat gaya tha aur aadha doodh gir gaya. Order Saturday ka tha.',
+      createdAt: ticketAt,
+    },
+    {
+      id: newId(),
+      ticketId: ticketOne,
+      authorId: userIdByEmail.get('admin@qareeb.app')!,
+      authorRole: 'ADMIN' as UserRole,
+      body: 'Sorry about that — 100 points credited to your wallet and we have spoken to the dairy.',
+      createdAt: iso(2, 15),
+    },
+    {
+      id: newId(),
+      ticketId: ticketTwo,
+      authorId: userIdByEmail.get('roshan@demo.com')!,
+      authorRole: 'MERCHANT' as UserRole,
+      body: 'Please transfer future payouts to the new Easypaisa number on file.',
+      createdAt: iso(0, 11),
+    },
+  ]);
+
   /* orders ----------------------------------------------------------------- */
   const productRowsByShop = new Map<string, (typeof products.$inferInsert)[]>();
   for (const row of productRows) {
@@ -714,6 +787,8 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<void> {
     reviewComment?: string;
     itemCount?: number;
     note?: string;
+    /** set for a future-dated order the shop should prepare later */
+    scheduledFor?: string;
   }) => {
     const shop = SHOPS.find((s) => s.key === input.shopKey)!;
     const shopId = shopIdByKey.get(input.shopKey)!;
@@ -781,6 +856,7 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<void> {
       etaMinutes: zone.etaMinutes,
       promoCode: input.promoCode ?? null,
       notes: input.note ?? null,
+      scheduledFor: input.scheduledFor ?? null,
       deliveryAddress: { ...addressRow, phone: '+92 300 1234567' } as DeliveryAddressSnapshot,
       statusHistory: history,
       acceptedAt: history.find((h) => h.status === 'ACCEPTED')?.at ?? null,
@@ -856,6 +932,60 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<void> {
       orderCount += 1;
     }
   }
+  // A guaranteed slice of delivered trade for the two shops the demo walks
+  // through (Al-Madina and Roshan), so analytics and the payout ledger have
+  // real numbers on a fresh install.
+  for (const [shopKey, customerEmail, day] of [
+    ['madina', 'ali@demo.com', 12],
+    ['madina', 'sara@demo.com', 11],
+    ['madina', 'hassan@demo.com', 9],
+    ['madina', 'ali@demo.com', 7],
+    ['madina', 'sara@demo.com', 5],
+    ['madina', 'hassan@demo.com', 3],
+    ['roshan', 'ali@demo.com', 10],
+    ['roshan', 'sara@demo.com', 8],
+    ['roshan', 'hassan@demo.com', 6],
+    ['roshan', 'ali@demo.com', 4],
+  ] as const) {
+    await placeOrder({
+      shopKey,
+      customerEmail,
+      status: 'DELIVERED',
+      createdAt: iso(day, 12 + Math.round(between(0, 7)), Math.round(between(0, 59))),
+      paymentMethod: pick<PaymentMethod>(['COD', 'JAZZCASH', 'EASYPAISA']),
+      runnerEmail: pick(RIDERS).email,
+      rating: Math.round(between(4, 5.4)),
+      reviewComment: pick(comments),
+      itemCount: Math.round(between(2, 4)),
+      tip: pick([0, 0, 50, 100]),
+    });
+    orderCount += 1;
+  }
+
+  // Kamran (rider2) is the rider the demo logs in as. His week is prepaid with
+  // tips, so his wallet carries a real payable balance instead of only cash to
+  // hand over — the settlement screen has both a merchant and a rider request.
+  for (const [day, tip] of [
+    [6, 100],
+    [5, 150],
+    [3, 100],
+    [2, 50],
+    [1, 100],
+  ] as const) {
+    await placeOrder({
+      shopKey: pick(['madina', 'roshan', 'mart']),
+      customerEmail: pick(CUSTOMERS).email,
+      status: 'DELIVERED',
+      createdAt: iso(day, 13 + Math.round(between(0, 6)), Math.round(between(0, 59))),
+      paymentMethod: pick<PaymentMethod>(['JAZZCASH', 'EASYPAISA']),
+      runnerEmail: 'rider2@demo.com',
+      rating: Math.round(between(4, 5.4)),
+      reviewComment: pick(comments),
+      itemCount: Math.round(between(2, 4)),
+      tip,
+    });
+    orderCount += 1;
+  }
   log(`· ${orderCount} historical orders across 14 days`);
 
   /* live orders ------------------------------------------------------------ */
@@ -898,6 +1028,23 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<void> {
     paymentMethod: 'COD',
     runnerEmail: null,
     itemCount: 4,
+  });
+
+  // Order 4: a scheduled order for tomorrow morning (the merchant sees a
+  // "scheduled" badge and prepares it just before the slot).
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(9, 0, 0, 0);
+  await placeOrder({
+    shopKey: 'roshan',
+    customerEmail: 'hassan@demo.com',
+    status: 'PENDING',
+    createdAt: new Date(Date.now() - 9 * 60_000).toISOString(),
+    paymentMethod: 'EASYPAISA',
+    runnerEmail: null,
+    itemCount: 3,
+    note: 'Birthday cake ke saath candles bhi bhej dein.',
+    scheduledFor: tomorrow.toISOString(),
   });
 
   // A short chat on the live order so the customer can see messaging working.
@@ -988,6 +1135,65 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<void> {
     { id: newId(), actorId: userIdByEmail.get('admin@qareeb.app')!, actorRole: 'ADMIN', action: 'settings.update', entity: 'settings', entityId: 'serviceFeePct', meta: { from: 1.5, to: 2 }, createdAt: iso(5, 16) },
     { id: newId(), actorId: userIdByEmail.get('admin@qareeb.app')!, actorRole: 'ADMIN', action: 'campaign.send', entity: 'campaign', entityId: 'eid-bazaar', meta: { recipients: 412 }, createdAt: iso(6, 10) },
   ]);
+
+  /* payout history derived from what was actually delivered ------------------ */
+
+  const [madinaDelivered] = await db
+    .select({ subtotal: sql<number>`coalesce(sum(${orders.subtotal}), 0)::float` })
+    .from(orders)
+    .where(and(eq(orders.shopId, shopIdByKey.get('madina')!), eq(orders.status, 'DELIVERED')));
+  const madinaGross = Number(madinaDelivered?.subtotal ?? 0);
+  const madinaNet = Math.round(madinaGross * (1 - DEFAULT_SETTINGS.commissionPct / 100));
+  const settledAmount = Math.max(0, Math.floor((madinaNet * 0.7) / 50) * 50);
+
+  const [kamran] = await db
+    .select({ fees: sql<number>`coalesce(sum(${orders.deliveryFee} + ${orders.tip}), 0)::float` })
+    .from(orders)
+    .where(and(eq(orders.runnerId, userIdByEmail.get('rider2@demo.com')!), eq(orders.status, 'DELIVERED')));
+  const [kamranProfile] = await db
+    .select({ cashInHand: runnerProfiles.cashInHand })
+    .from(runnerProfiles)
+    .where(eq(runnerProfiles.userId, userIdByEmail.get('rider2@demo.com')!))
+    .limit(1);
+  const kamranOwed = Math.max(0, Math.round(Number(kamran?.fees ?? 0) - Number(kamranProfile?.cashInHand ?? 0)));
+  const requestedAmount = Math.floor((kamranOwed * 0.6) / 50) * 50;
+
+  const payoutRows: (typeof payoutRequests.$inferInsert)[] = [];
+  if (settledAmount >= 500) {
+    payoutRows.push({
+      id: newId(),
+      userId: userIdByEmail.get('madina@demo.com')!,
+      role: 'MERCHANT' as UserRole,
+      shopId: shopIdByKey.get('madina')!,
+      amount: settledAmount,
+      method: 'JAZZCASH',
+      accountTitle: 'Al-Madina Karyana Store',
+      accountNumber: '0301 4567890',
+      status: 'PAID',
+      note: 'Verified against the delivery log',
+      decidedBy: userIdByEmail.get('admin@qareeb.app')!,
+      decidedAt: iso(6, 12),
+      createdAt: iso(7, 10),
+      updatedAt: iso(6, 12),
+    });
+  }
+  if (requestedAmount >= 500) {
+    payoutRows.push({
+      id: newId(),
+      userId: userIdByEmail.get('rider2@demo.com')!,
+      role: 'RIDER' as UserRole,
+      shopId: null,
+      amount: requestedAmount,
+      method: 'EASYPAISA',
+      accountTitle: 'Kamran Yousaf',
+      accountNumber: '0345 9988776',
+      status: 'PENDING',
+      note: null,
+      createdAt: iso(1, 20),
+      updatedAt: iso(1, 20),
+    });
+  }
+  if (payoutRows.length) await db.insert(payoutRequests).values(payoutRows);
 
   log('· live orders, chat, notifications and audit trail');
   log(`\n  Demo login: ali@demo.com / ${env.demoPassword}\n  Merchant:   madina@demo.com   Rider: rider1@demo.com   Admin: admin@qareeb.app\n`);

@@ -385,6 +385,8 @@ runnerRouter.post(
           })
           .where(eq(users.id, customer.id));
       }
+      const { creditReferralOnDelivery } = await import('../lib/referral.js');
+      await creditReferralOnDelivery({ ...order, status: 'DELIVERED' });
       await notify({
         userId: order.customerId,
         title: 'Delivered — enjoy your order',

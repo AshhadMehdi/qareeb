@@ -41,6 +41,9 @@ authRouter.post(
     if (existing) throw conflict('That email is already registered — try signing in');
 
     const id = newId();
+    const { ensureReferralCode, findReferrer } = await import('../lib/referral.js');
+    const referrer = input.referralCode && input.role === 'CUSTOMER' ? await findReferrer(input.referralCode) : null;
+
     await db.insert(users).values({
       id,
       email: input.email,
@@ -49,9 +52,12 @@ authRouter.post(
       role: input.role,
       passwordHash: await hashPassword(input.password),
       walletPoints: 0,
+      referralCode: null,
+      referredBy: referrer && referrer.id !== id ? referrer.referralCode : null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
+    await ensureReferralCode(id);
 
     if (input.role === 'RIDER') {
       await db.insert(runnerProfiles).values({

@@ -18,6 +18,7 @@ export type PublicUser = {
   role: string;
   avatarUrl: string | null;
   walletPoints: number;
+  referralCode: string | null;
   createdAt: string;
 };
 
@@ -30,6 +31,7 @@ export function serializeUser(row: UserRow): PublicUser {
     role: row.role,
     avatarUrl: row.avatarUrl,
     walletPoints: row.walletPoints,
+    referralCode: row.referralCode,
     createdAt: String(row.createdAt),
   };
 }

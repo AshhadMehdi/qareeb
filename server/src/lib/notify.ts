@@ -25,7 +25,7 @@ export type NotifyInput = {
   userId: string;
   title: string;
   body: string;
-  type?: 'info' | 'order' | 'chat' | 'promo' | 'system';
+  type?: 'info' | 'order' | 'chat' | 'promo' | 'system' | 'reward' | 'payout' | 'support';
   data?: Record<string, unknown>;
   /** skip the browser push, keep the in-app notification */
   silent?: boolean;

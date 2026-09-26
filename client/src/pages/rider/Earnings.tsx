@@ -1,5 +1,6 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { EmptyState, SectionHeading, Skeleton, StatCard } from '../../components/ui';
+import WithdrawPanel from '../../components/WithdrawPanel';
 import { useRunnerEarnings, useRunnerProfile } from '../../lib/queries';
 import { dayLabel, rupees, tooltipMoney } from '../../lib/format';
 
@@ -49,6 +50,8 @@ export default function RiderEarnings() {
           </ResponsiveContainer>
         </div>
       </section>
+
+      <WithdrawPanel audience="rider" />
 
       <section className="card p-4">
         <SectionHeading title="Recent trips" subtitle={`${data?.tips ? rupees(data.tips) : 'No'} tips in the last 30 days`} />

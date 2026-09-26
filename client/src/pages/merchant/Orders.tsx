@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { EmptyState, ErrorNote, Skeleton, StatusPill } from '../../components/ui';
+import { EmptyState, ErrorNote, Skeleton, StatusPill, Tag } from '../../components/ui';
 import { ChatPanel } from '../../components/OrderPieces';
 import { useAssignRunner, useMerchantOrders, useMerchantRunners, useSetOrderStatus } from '../../lib/queries';
 import { apiPost } from '../../lib/api';
@@ -155,8 +155,26 @@ function OrderCard({
             {order.customer?.phone ? ` · ${order.customer.phone}` : ''}
           </p>
         </div>
-        <StatusPill status={order.status} />
+        <div className="flex shrink-0 items-center gap-2">
+          {order.scheduledFor ? <Tag tone="wheat">scheduled</Tag> : null}
+          <StatusPill status={order.status} />
+        </div>
       </div>
+
+      {order.scheduledFor ? (
+        <p className="mt-2 rounded-2xl border border-wheat-100 bg-wheat-100/40 px-3 py-2 text-xs text-ink-700">
+          Customer asked for{' '}
+          <span className="font-semibold">
+            {new Date(order.scheduledFor).toLocaleString('en-PK', {
+              hour: 'numeric',
+              minute: '2-digit',
+              day: 'numeric',
+              month: 'short',
+            })}
+          </span>{' '}
+          — prepare it to be ready just before then.
+        </p>
+      ) : null}
 
       <ul className="mt-3 space-y-1 text-sm">
         {order.items.map((item) => (

@@ -40,6 +40,55 @@ if (!sqlFile) {
 
 const raw = fs.readFileSync(path.join(outDir, sqlFile), 'utf8');
 
+/**
+ * Splits a CREATE TABLE body into top-level parts (commas outside parentheses).
+ */
+function splitColumns(body) {
+  const parts = [];
+  let depth = 0;
+  let current = '';
+  let inString = false;
+  for (const char of body) {
+    if (char === "'") inString = !inString;
+    if (!inString) {
+      if (char === '(') depth += 1;
+      if (char === ')') depth -= 1;
+      if (char === ',' && depth === 0) {
+        parts.push(current.trim());
+        current = '';
+        continue;
+      }
+    }
+    current += char;
+  }
+  if (current.trim()) parts.push(current.trim());
+  return parts;
+}
+
+/**
+ * `CREATE TABLE IF NOT EXISTS` never touches a table that already exists, so a
+ * column added to schema.ts would be missing on an existing database. For every
+ * column we therefore also emit an `ADD COLUMN IF NOT EXISTS` and place it right
+ * after its CREATE TABLE — before the indexes and foreign keys that may use it.
+ * Columns that are NOT NULL without a default are added nullable, because the
+ * existing rows cannot be backfilled automatically.
+ */
+function additiveStatements(createTable) {
+  const match = /^CREATE TABLE IF NOT EXISTS "([^"]+)" \(([\s\S]*)\)$/.exec(createTable);
+  if (!match) return [createTable];
+  const [, table, body] = match;
+  const out = [createTable];
+  for (const part of splitColumns(body)) {
+    if (!/^"[^"]+"\s/.test(part)) continue; // table-level constraint
+    const definition = part.replace(/\s+/g, ' ').trim();
+    const safe = !/NOT NULL/i.test(definition) || /DEFAULT/i.test(definition) || /PRIMARY KEY/i.test(definition)
+      ? definition
+      : definition.replace(/\s*NOT NULL/i, '');
+    out.push(`ALTER TABLE "${table}" ADD COLUMN IF NOT EXISTS ${safe}`);
+  }
+  return out;
+}
+
 const statements = raw
   .split('--> statement-breakpoint')
   .map((statement) => statement.trim().replace(/;$/, ''))
@@ -60,7 +109,8 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$`;
     }
     return createLike;
-  });
+  })
+  .flatMap((statement) => (/^CREATE TABLE IF NOT EXISTS/.test(statement) ? additiveStatements(statement) : [statement]));
 
 const header = `-- GENERATED FILE — do not edit by hand.
 -- Source of truth: server/src/db/schema.ts  (regenerate: npm run db:schema -w server)

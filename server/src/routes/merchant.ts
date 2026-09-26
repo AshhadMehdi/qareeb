@@ -527,6 +527,18 @@ merchantRouter.post(
       await refundOrder(order.id, patch.cancelReason as string, order.customerId);
     }
 
+    if (next === 'DELIVERED') {
+      const [customer] = await db.select().from(users).where(eq(users.id, order.customerId)).limit(1);
+      if (customer && order.pointsEarned) {
+        await db
+          .update(users)
+          .set({ walletPoints: customer.walletPoints + order.pointsEarned, updatedAt: at })
+          .where(eq(users.id, customer.id));
+      }
+      const { creditReferralOnDelivery } = await import('../lib/referral.js');
+      await creditReferralOnDelivery({ ...order, status: 'DELIVERED' });
+    }
+
     if (next === 'DELIVERED' && order.runnerId) {
       const [profile] = await db
         .select()

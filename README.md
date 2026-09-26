@@ -17,8 +17,10 @@ Everything ships in this repo: **serverless API + PostgreSQL database + seed dat
 - **Search** across shops *and* products ("milk" finds every shop that sells milk), recent searches, suggestions.
 - **Shop page** – hero, rating, ETA, delivery fee for *your* location, out-of-zone warning, opening hours, delivery rings, reviews, grouped products with sticky category chips, live stock.
 - **Multi-shop cart** – items grouped per shop, per-shop notes, quantity steppers; guests can browse and fill a cart, sign-in is asked only at checkout.
-- **Checkout** – saved addresses with map pin & reverse geocoding, live quote per shop (distance, zone, fee, free-delivery thresholds, minimum order, stock issues), promo codes, rider tips, **payment methods: Cash on delivery, JazzCash, Easypaisa, Card (sandbox) and Qareeb points wallet**, order notes. One order per shop, linked by a group id.
+- **Checkout** – saved addresses with map pin & reverse geocoding, live quote per shop (distance, zone, fee, free-delivery thresholds, minimum order, stock issues), promo codes, rider tips, **schedule the delivery** (next four half-hour slots today, or tomorrow 9 am), **payment methods: Cash on delivery, JazzCash, Easypaisa, Card (sandbox) and Qareeb points wallet**, order notes. One order per shop, linked by a group id.
 - **Live tracking** – status timeline, rider on the map with smooth motion, ETA, call / WhatsApp / **in-app chat** with the rider and shop, cancel window, receipt, reorder.
+- **Refer & earn** – every account gets a shareable invite code (`ALI-XXXX`, also accepted as `?ref=` on signup). Both sides are rewarded in points once the invited friend's **first order is delivered**; *Invite friends* shows invited / converted / earned.
+- **Help centre** – open a support ticket from your orders or account, priority + topic, chat it through with the platform team, close it when solved.
 - Order history, favourites, saved addresses, loyalty **points wallet**, notification centre, installable **PWA** (offline shell; web-push subscriptions are accepted by the API).
 - Email/password sign-in, or browse without an account and sign in at checkout.
 
@@ -30,14 +32,18 @@ Everything ships in this repo: **serverless API + PostgreSQL database + seed dat
 - **Shop settings** – details & branding, opening hours per weekday, **ring-based delivery zones** (radius → fee, free-above threshold) with a live map preview.
 - **Riders** – build your own team by email, see platform riders nearby, online status and workload.
 - **Promo codes** – percent / fixed / free delivery, min order, caps, expiry, usage limits.
+- **Payouts** – a running wallet of delivered sales minus platform commission, with JazzCash / Easypaisa / bank withdrawal requests (minimum Rs 500), status history and the admin's note on each settlement.
 
 ### Rider app (`/runner`)
 - Online/offline switch, live GPS streaming (throttled) to customers & shops, earnings today / week / month + chart, tips.
 - Delivery detail with pickup & drop-off cards, navigation deep-links, call / WhatsApp / chat, cash-to-collect banner, *picked up* → *delivered* flow, decline before pickup.
+- **Earnings & payouts** – delivery fees + tips minus cash still in hand, with withdrawal requests and settlement history.
 - Demo mode: **"Simulate ride"** button animates a fake GPS trip so live tracking can be demoed on a laptop.
 
 ### Admin console (`/admin`)
 - Platform stats (GMV, revenue, users, riders online), 14-day charts, **live map** of shops and moving riders.
+- **Payout desk** – every merchant and rider withdrawal request in one queue with totals, approve → mark paid (or reject with a note); each decision is audited and pushes a notification to the wallet owner.
+- **Support inbox** – all customer tickets with priority badges and status counts, reply in the thread or resolve it; ticket activity lands in the audit log.
 - Approve / suspend shops, manage users (roles, wallet points, disable), browse & intervene in any order, platform settings (service fee, commission, loyalty rate, radius cap, cancel window, city), platform-wide promos, **broadcast announcements**.
 
 ---
@@ -84,6 +90,8 @@ Password for local and hosted demo accounts: `password123` (also shown on the lo
 | Admin | `admin@qareeb.app` | |
 
 Promo codes to try: `WELCOME50` (Rs 50 off ≥ Rs 500), `FREESHIP` (≥ Rs 800), `MADINA10`, `SWEET15`.
+
+The seed also leaves a settlement queue and a support inbox to poke at: **Kamran Yousaf** (rider2) has a pending withdrawal request, **Al-Madina** a paid one, two support tickets (one from a customer, one from a merchant) sit in the admin inbox, and **Roshan Bakery** has a delivery scheduled for 9 am tomorrow.
 
 ### Try the full flow in 2 minutes
 1. Sign in as **Ali**, open a shop, add items, checkout with JazzCash + a tip.
@@ -132,12 +140,12 @@ All endpoints are under `/api`, JSON in/out, `Authorization: Bearer <jwt>`. Erro
 
 - `realtime`: authenticated event feed (no WebSocket server)
 - `auth`: register, login, google, me, change-password
-- `users/me`: profile, addresses, favorites, notifications, push subscriptions, wallet
+- `users/me`: profile, addresses, favorites, notifications, push subscriptions, wallet, **referral stats, payout wallet & requests, support tickets**
 - `shops`: nearby search (`lat, lng, radius, q, category, sort, openNow`), categories, featured, detail (products, reviews, zones)
 - `orders`: quote, checkout (multi-shop), list, detail, cancel, review, messages
 - `merchant`: shop, zones, products (+bulk), orders & status, assign runner (`runnerId | "auto"`), runners, promos, analytics
 - `runner`: profile, location, deliveries & status, decline, earnings
-- `admin`: stats, shops, users, orders, settings, promos, broadcast
+- `admin`: stats, shops, users, orders, settings, promos, broadcast, **payouts (approve / pay / reject), support tickets (reply / status)**
 - `uploads`: multipart image upload → `/api/uploads/:id` (stored in Postgres)
 - Event feed: `order:created`, `order:updated`, `notification`, `chat:message`, `runner:location`, `shop:updated`
 
@@ -145,6 +153,8 @@ All endpoints are under `/api`, JSON in/out, `Authorization: Bearer <jwt>`. Erro
 - **Delivery rings**: each shop defines up to 6 concentric rings (`radiusKm → fee, freeAbove`). The first ring that reaches the customer sets the fee; beyond the largest ring the shop is shown but not deliverable.
 - **Order lifecycle**: `PENDING → ACCEPTED → PREPARING → READY → ON_THE_WAY → DELIVERED` (+ `CANCELLED`). Transitions are validated per role on the server; customers can cancel while pending or within a configurable window after acceptance; cancellations restock items and refund online/wallet payments.
 - **Auto-assign** scores riders by distance to the shop, current load and whether they belong to the shop's team.
+- **Money**: merchants are owed delivered subtotals minus commission; riders are owed delivery fees + tips minus the cash they still hold from COD orders. Both wallets are derived from the order ledger, not stored balances, so a payout can never exceed what was actually earned. Withdrawals live as `PENDING → APPROVED → PAID` (or `REJECTED`) requests that only an admin can advance.
+- **Scheduled orders** are normal orders with a `scheduledFor` timestamp: they reach the shop immediately, are tagged in the merchant queue and keep their slot through checkout.
 - **Payments** other than COD are simulated (marked paid instantly) — swap in a JazzCash/Easypaisa/Stripe gateway inside `placeOrders()`.
 - **Loyalty**: 2 points per Rs 100 (configurable) are credited when an order is delivered; 1 point = Rs 1 and points can pay for orders.
 - **Simulated where it matters**: JazzCash / Easypaisa / Card are marked paid instantly in sandbox mode, and the rider app has a *Simulate ride* button that streams fake GPS along the delivery route so live tracking can be demoed from a laptop.

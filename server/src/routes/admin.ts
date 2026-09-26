@@ -23,7 +23,9 @@ import { asyncHandler, badRequest, notFound, ok, parseBody } from '../lib/errors
 import { newId } from '../lib/ids.js';
 import { notify } from '../lib/notify.js';
 import { emit, userRoom } from '../lib/realtime.js';
-import { campaignSchema, emailSchema, promoSchema, settingsPatchSchema } from '../lib/schemas.js';
+import { campaignSchema, emailSchema, promoSchema, settingsPatchSchema, ticketReplySchema } from '../lib/schemas.js';
+import { allTickets, replyToTicket, setTicketStatus } from '../lib/support.js';
+import { decidePayout, payoutQueue } from '../lib/wallet.js';
 import { serializePromo } from '../lib/serialize.js';
 import { getSettings, updateSettings } from '../lib/settings.js';
 
@@ -681,5 +683,85 @@ adminRouter.get(
     const db = await getDb();
     const rows = await db.select().from(notifications).orderBy(desc(notifications.createdAt)).limit(40);
     res.json(ok({ notifications: rows }));
+  }),
+);
+
+/* payouts ------------------------------------------------------------------ */
+
+adminRouter.get(
+  '/payouts',
+  asyncHandler(async (req, res) => {
+    const status = typeof req.query.status === 'string' ? req.query.status : null;
+    res.json(ok(await payoutQueue(status)));
+  }),
+);
+
+adminRouter.post(
+  '/payouts/:id/status',
+  asyncHandler(async (req, res) => {
+    const input = parseBody(
+      z.object({
+        status: z.enum(['APPROVED', 'PAID', 'REJECTED']),
+        note: z.string().trim().max(200).nullish(),
+      }),
+      req.body,
+    );
+    const actor = authUser(req);
+    const updated = await decidePayout(String(req.params.id), input.status, actor.id, input.note);
+    await audit({
+      actorId: actor.id,
+      action: `payout.${input.status.toLowerCase()}`,
+      entity: 'payout',
+      entityId: updated.id,
+      meta: { amount: updated.amount, userId: updated.userId },
+    });
+    await notify({
+      userId: updated.userId,
+      title:
+        input.status === 'PAID'
+          ? 'Payout sent'
+          : input.status === 'APPROVED'
+            ? 'Payout approved'
+            : 'Payout request declined',
+      body:
+        input.status === 'REJECTED'
+          ? input.note ?? 'Your withdrawal request was declined. The money stays in your wallet.'
+          : `Rs ${Math.round(updated.amount)} — ${input.note ?? 'thanks for riding with Qareeb'}`,
+      type: 'payout',
+      data: { payoutId: updated.id, status: updated.status },
+    });
+    res.json(ok({ payout: updated }));
+  }),
+);
+
+/* support tickets ---------------------------------------------------------- */
+
+adminRouter.get(
+  '/tickets',
+  asyncHandler(async (req, res) => {
+    const status = typeof req.query.status === 'string' ? req.query.status : null;
+    res.json(ok(await allTickets(status)));
+  }),
+);
+
+adminRouter.post(
+  '/tickets/:id/reply',
+  asyncHandler(async (req, res) => {
+    const input = parseBody(ticketReplySchema, req.body);
+    const actor = authUser(req);
+    const ticket = await replyToTicket({ id: actor.id, role: actor.role }, String(req.params.id), input.body);
+    await audit({ actorId: actor.id, action: 'ticket.reply', entity: 'ticket', entityId: ticket.id });
+    res.status(201).json(ok({ ticket }));
+  }),
+);
+
+adminRouter.post(
+  '/tickets/:id/status',
+  asyncHandler(async (req, res) => {
+    const input = parseBody(z.object({ status: z.enum(['OPEN', 'ANSWERED', 'RESOLVED']) }), req.body);
+    const actor = authUser(req);
+    const ticket = await setTicketStatus(String(req.params.id), input.status);
+    await audit({ actorId: actor.id, action: `ticket.${input.status.toLowerCase()}`, entity: 'ticket', entityId: ticket.id });
+    res.json(ok({ ticket }));
   }),
 );

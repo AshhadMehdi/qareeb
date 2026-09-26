@@ -6,8 +6,11 @@ import { addresses, favorites, notifications, orders, pushSubscriptions, shops, 
 import { authUser, requireAuth } from '../lib/auth.js';
 import { asyncHandler, notFound, ok, parseBody } from '../lib/errors.js';
 import { newId } from '../lib/ids.js';
-import { vapidPublicKey } from '../lib/notify.js';
-import { addressInputSchema, emailSchema, phoneSchema } from '../lib/schemas.js';
+import { notify, vapidPublicKey } from '../lib/notify.js';
+import { addressInputSchema, emailSchema, phoneSchema, payoutRequestSchema, ticketReplySchema, ticketSchema } from '../lib/schemas.js';
+import { openTicket, replyToTicket, ticketsFor } from '../lib/support.js';
+import { requestPayout, serializePayout, walletFor } from '../lib/wallet.js';
+import { ensureReferralCode } from '../lib/referral.js';
 import { serializeUser } from '../lib/serialize.js';
 
 export const usersRouter = Router();
@@ -20,6 +23,9 @@ usersRouter.get(
     const db = await getDb();
     const [row] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
     if (!row) throw notFound('Account not found');
+    // every account owns a share code, generated the first time it is needed
+    const referralCode = row.referralCode ?? (await ensureReferralCode(user.id));
+    const profileRow = { ...row, referralCode };
 
     const [addressRows, favoriteRows, orderStats] = await Promise.all([
       db.select().from(addresses).where(eq(addresses.userId, user.id)).orderBy(desc(addresses.isDefault)),
@@ -40,7 +46,7 @@ usersRouter.get(
 
     res.json(
       ok({
-        user: serializeUser(row),
+        user: serializeUser(profileRow),
         addresses: addressRows.map(serializeAddress),
         favorites: favoriteRows.map((row) => ({
           id: row.favorite.id,
@@ -359,5 +365,72 @@ usersRouter.get(
         })),
       }),
     );
+  }),
+);
+
+/* earnings wallet ---------------------------------------------------------- */
+
+usersRouter.get(
+  '/me/payouts',
+  asyncHandler(async (req, res) => {
+    const { account, wallet } = await walletFor(authUser(req).id);
+    res.json(ok({ role: account.role, shopId: account.shopId, wallet }));
+  }),
+);
+
+usersRouter.post(
+  '/me/payouts',
+  asyncHandler(async (req, res) => {
+    const input = parseBody(payoutRequestSchema, req.body);
+    const { account } = await walletFor(authUser(req).id);
+    const row = await requestPayout(authUser(req).id, input);
+    // Re-read after the insert: the balance the client shows must already
+    // account for the request it just created.
+    const { wallet } = await walletFor(authUser(req).id);
+    await notify({
+      userId: authUser(req).id,
+      title: 'Withdrawal requested',
+      body: `We are reviewing your Rs ${Math.round(input.amount)} withdrawal.`,
+      type: 'payout',
+      data: { payoutId: row.id },
+    });
+    res.status(201).json(ok({ payout: serializePayout(row), role: account.role, available: wallet.available }));
+  }),
+);
+
+/* refer & earn ------------------------------------------------------------- */
+
+usersRouter.get(
+  '/me/referral',
+  asyncHandler(async (req, res) => {
+    const { referralSummary } = await import('../lib/referral.js');
+    res.json(ok(await referralSummary(authUser(req).id)));
+  }),
+);
+
+/* support tickets ---------------------------------------------------------- */
+
+usersRouter.get(
+  '/me/tickets',
+  asyncHandler(async (req, res) => {
+    res.json(ok(await ticketsFor(authUser(req).id)));
+  }),
+);
+
+usersRouter.post(
+  '/me/tickets',
+  asyncHandler(async (req, res) => {
+    const input = parseBody(ticketSchema, req.body);
+    const ticket = await openTicket(authUser(req), input);
+    res.status(201).json(ok({ ticket }));
+  }),
+);
+
+usersRouter.post(
+  '/me/tickets/:id/reply',
+  asyncHandler(async (req, res) => {
+    const input = parseBody(ticketReplySchema, req.body);
+    const ticket = await replyToTicket(authUser(req), String(req.params.id), input.body);
+    res.status(201).json(ok({ ticket }));
   }),
 );

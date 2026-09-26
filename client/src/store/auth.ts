@@ -17,7 +17,14 @@ type AuthState = {
   error: string | null;
   signIn: (email: string, password: string) => Promise<User>;
   demoSignIn: (email: string) => Promise<User>;
-  register: (input: { name: string; email: string; password: string; phone?: string; role?: string }) => Promise<User>;
+  register: (input: {
+    name: string;
+    email: string;
+    password: string;
+    phone?: string;
+    role?: string;
+    referralCode?: string;
+  }) => Promise<User>;
   signOut: () => Promise<void>;
   refreshMe: () => Promise<void>;
   setUser: (user: User) => void;

@@ -75,6 +75,12 @@ export const users = pgTable(
     isActive: boolean('is_active').notNull().default(true),
     /** loyalty points: 1 point = 1 PKR when spending */
     walletPoints: integer('wallet_points').notNull().default(0),
+    /** share code every account owns; new customers can enter it at sign-up */
+    referralCode: text('referral_code'),
+    /** the code this account was invited with, if any */
+    referredBy: text('referred_by'),
+    /** set once the invited customer's first order is delivered */
+    referralCreditedAt: timestamp('referral_credited_at', { withTimezone: true, mode: 'string' }),
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
       .notNull()
       .defaultNow(),
@@ -84,6 +90,7 @@ export const users = pgTable(
   },
   (table) => [
     uniqueIndex('users_email_idx').on(table.email),
+    uniqueIndex('users_referral_code_idx').on(table.referralCode),
     index('users_role_idx').on(table.role),
     index('users_created_idx').on(table.createdAt),
   ],
@@ -639,6 +646,89 @@ export const apiRateLimits = pgTable(
 /* Relations (used by API joins)                                              */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Merchant and rider payout requests. Balances are derived from delivered
+ * orders on the fly (see lib/wallet.ts), so this table is only the withdrawal
+ * ledger: what was asked for, and what an admin decided.
+ */
+export const payoutRequests = pgTable(
+  'payout_requests',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    role: text('role').$type<UserRole>().notNull(),
+    /** set for merchant payouts, null for riders */
+    shopId: text('shop_id').references(() => shops.id, { onDelete: 'set null' }),
+    amount: doublePrecision('amount').notNull(),
+    method: text('method').$type<'JAZZCASH' | 'EASYPAISA' | 'BANK'>().notNull().default('JAZZCASH'),
+    accountTitle: text('account_title').notNull(),
+    accountNumber: text('account_number').notNull(),
+    status: text('status').$type<'PENDING' | 'APPROVED' | 'PAID' | 'REJECTED'>().notNull().default('PENDING'),
+    note: text('note'),
+    decidedBy: text('decided_by'),
+    decidedAt: timestamp('decided_at', { withTimezone: true, mode: 'string' }),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index('payout_requests_user_idx').on(table.userId),
+    index('payout_requests_status_idx').on(table.status),
+  ],
+);
+
+/**
+ * Support tickets raised by customers, merchants or riders, with a threaded
+ * reply list. Admins answer from the console.
+ */
+export const supportTickets = pgTable(
+  'support_tickets',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    orderId: text('order_id').references(() => orders.id, { onDelete: 'set null' }),
+    subject: text('subject').notNull(),
+    category: text('category').notNull().default('OTHER'),
+    /** low | normal | high */
+    priority: text('priority').notNull().default('normal'),
+    status: text('status').$type<'OPEN' | 'ANSWERED' | 'RESOLVED'>().notNull().default('OPEN'),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index('support_tickets_user_idx').on(table.userId),
+    index('support_tickets_status_idx').on(table.status),
+  ],
+);
+
+export const ticketMessages = pgTable(
+  'ticket_messages',
+  {
+    id: text('id').primaryKey(),
+    ticketId: text('ticket_id')
+      .notNull()
+      .references(() => supportTickets.id, { onDelete: 'cascade' }),
+    authorId: text('author_id').notNull(),
+    authorRole: text('author_role').$type<UserRole>().notNull(),
+    body: text('body').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index('ticket_messages_ticket_idx').on(table.ticketId)],
+);
+
 export const usersRelations = relations(users, ({ many, one }) => ({
   addresses: many(addresses),
   orders: many(orders),
@@ -672,3 +762,6 @@ export type DeliveryZoneRow = typeof deliveryZones.$inferSelect;
 export type RunnerProfileRow = typeof runnerProfiles.$inferSelect;
 export type PromoRow = typeof promos.$inferSelect;
 export type CampaignRow = typeof campaigns.$inferSelect;
+export type PayoutRequestRow = typeof payoutRequests.$inferSelect;
+export type SupportTicketRow = typeof supportTickets.$inferSelect;
+export type TicketMessageRow = typeof ticketMessages.$inferSelect;

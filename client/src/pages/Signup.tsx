@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ErrorNote, Field, Spinner } from '../components/ui';
 import { homeForRole, useAuth } from '../store/auth';
@@ -14,7 +14,15 @@ export default function Signup() {
   const register = useAuth((state) => state.register);
   const status = useAuth((state) => state.status);
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', role: 'CUSTOMER' as (typeof ROLES)[number]['value'] });
+  const [params] = useSearchParams();
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    role: 'CUSTOMER' as (typeof ROLES)[number]['value'],
+    referralCode: params.get('ref')?.toUpperCase() ?? '',
+  });
   const [error, setError] = useState<string | null>(null);
 
   return (
@@ -53,6 +61,7 @@ export default function Signup() {
                 phone: form.phone || undefined,
                 password: form.password,
                 role: form.role,
+                referralCode: form.referralCode || undefined,
               });
               toast.success(`Welcome to Qareeb, ${user.name.split(' ')[0]}`);
               navigate(homeForRole(user.role), { replace: true });
@@ -98,6 +107,17 @@ export default function Signup() {
               minLength={8}
             />
           </Field>
+
+          {form.role === 'CUSTOMER' ? (
+            <Field label="Invite code" hint="Optional — you and your friend both get points">
+              <input
+                className="input uppercase"
+                value={form.referralCode}
+                onChange={(event) => setForm({ ...form, referralCode: event.target.value.toUpperCase() })}
+                placeholder="ALI-K3X9"
+              />
+            </Field>
+          ) : null}
 
           {error ? <ErrorNote>{error}</ErrorNote> : null}
 

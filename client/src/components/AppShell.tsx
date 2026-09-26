@@ -12,6 +12,8 @@ import {
   IconBike,
   IconCart,
   IconChart,
+  IconChat,
+  IconGift,
   IconHome,
   IconPin,
   IconReceipt,
@@ -21,6 +23,7 @@ import {
   IconStore,
   IconTag,
   IconUser,
+  IconWallet,
 } from './icons';
 
 export type NavItem = { to: string; label: string; icon: ReactNode; badge?: number };
@@ -46,6 +49,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         { to: '/merchant/products', label: 'Products', icon: <IconTag /> },
         { to: '/merchant/shop', label: 'Shop', icon: <IconStore /> },
         { to: '/merchant/riders', label: 'Riders', icon: <IconBike /> },
+        { to: '/merchant/payouts', label: 'Payouts', icon: <IconWallet /> },
       ];
     }
     if (hasRole(user, 'RIDER')) {
@@ -62,6 +66,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
         { to: '/admin/users', label: 'People', icon: <IconUser /> },
         { to: '/admin/orders', label: 'Orders', icon: <IconReceipt /> },
         { to: '/admin/marketing', label: 'Marketing', icon: <IconTag /> },
+        { to: '/admin/payouts', label: 'Payouts', icon: <IconWallet /> },
+        { to: '/admin/support', label: 'Support', icon: <IconChat /> },
         { to: '/admin/settings', label: 'Platform', icon: <IconSettings /> },
         { to: '/admin/audit', label: 'Audit', icon: <IconShield /> },
       ];
@@ -231,8 +237,15 @@ export default function AppShell({ children }: { children: ReactNode }) {
               <a className="btn btn-ghost" href="/account/wallet">
                 Points wallet
               </a>
+              <a className="btn btn-ghost" href="/account/refer">
+                <IconGift className="mr-1.5 inline h-4 w-4" />
+                Invite friends
+              </a>
               <a className="btn btn-ghost" href="/favorites">
                 Favourites
+              </a>
+              <a className="btn btn-ghost" href="/support">
+                Help
               </a>
               <a className="btn btn-ghost" href="/orders">
                 Orders

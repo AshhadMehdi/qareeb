@@ -27,7 +27,28 @@ export default function Checkout() {
   const [addingAddress, setAddingAddress] = useState(false);
   const [payment, setPayment] = useState<PaymentMethod>('COD');
   const [notes, setNotes] = useState('');
+  const [scheduledFor, setScheduledFor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  /** Half-hour slots for the rest of today plus tomorrow morning. */
+  const slots = useMemo(() => {
+    const out: { value: string; label: string }[] = [];
+    const start = new Date();
+    start.setMinutes(start.getMinutes() + 90);
+    start.setMinutes(Math.ceil(start.getMinutes() / 30) * 30, 0, 0);
+    for (let index = 0; index < 4; index += 1) {
+      const at = new Date(start.getTime() + index * 30 * 60_000);
+      out.push({
+        value: at.toISOString(),
+        label: at.toLocaleTimeString('en-PK', { hour: 'numeric', minute: '2-digit' }),
+      });
+    }
+    const morning = new Date(start);
+    morning.setDate(morning.getDate() + 1);
+    morning.setHours(9, 0, 0, 0);
+    out.push({ value: morning.toISOString(), label: 'Tomorrow 9:00 am' });
+    return out;
+  }, []);
 
   const savedAddresses = profile.data?.addresses ?? [];
   const chosenAddress = savedAddresses.find((address) => address.id === addressId) ?? null;
@@ -109,6 +130,7 @@ export default function Checkout() {
         paymentMethod: payment,
         usePoints: quote.data?.points.applied ?? usePoints,
         notes: notes || undefined,
+        scheduledFor: scheduledFor ?? undefined,
       });
       const first = result.orders[0];
       markOrdered(first?.id ?? '');
@@ -329,6 +351,31 @@ export default function Checkout() {
           availablePoints={user?.walletPoints ?? 0}
           total={summary?.total ?? 0}
         />
+
+        <Field
+          label="When"
+          hint={scheduledFor ? `Shop will prepare it for ${new Date(scheduledFor).toLocaleString('en-PK', { hour: 'numeric', minute: '2-digit', day: 'numeric', month: 'short' })}` : 'Order now and the shop starts immediately'}
+        >
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={`chip ${!scheduledFor ? 'chip-active' : ''}`}
+              onClick={() => setScheduledFor(null)}
+            >
+              Deliver now
+            </button>
+            {slots.map((slot) => (
+              <button
+                key={slot.value}
+                type="button"
+                className={`chip ${scheduledFor === slot.value ? 'chip-active' : ''}`}
+                onClick={() => setScheduledFor(slot.value)}
+              >
+                {slot.label}
+              </button>
+            ))}
+          </div>
+        </Field>
 
         <Field label="Notes for the shops and rider" hint="Gate colour, landmark, call on arrival — anything useful">
           <textarea

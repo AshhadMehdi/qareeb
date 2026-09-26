@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { env } from '../env.js';
 import { getHandle } from './client.js';
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 const LOCK_KEY = 918_273_645;
 
 const schemaSqlUrl = new URL('../../sql/schema.sql', import.meta.url);
@@ -66,13 +66,20 @@ async function applySchema(): Promise<{ empty: boolean }> {
   }
 }
 
+/**
+ * `db:reset` / `db:seed` run this same module, so bootstrap must not import the
+ * seed back while the seed script is mid-evaluation (that deadlocks the ESM
+ * graph): the CLI seeds explicitly after ensureDatabase() returns.
+ */
+const isSeedCli = /(^|[\\/])seed\.[cm]?[jt]s$/.test(process.argv[1] ?? '');
+
 async function run(): Promise<void> {
   const started = Date.now();
   const { empty } = await applySchema();
   const handle = await getHandle();
 
   let seeded = false;
-  if (empty && env.autoSeed) {
+  if (empty && env.autoSeed && !isSeedCli) {
     const { seedDemoData } = await import('./seed.js');
     await seedDemoData({ reset: false, quiet: true });
     seeded = true;
