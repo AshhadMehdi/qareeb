@@ -63,6 +63,20 @@ export default function MerchantOrders() {
         </div>
       </div>
 
+      <section className="grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Order queue health">
+        {[
+          { label: 'New', value: orders.data?.counts.pending ?? 0, hint: 'accept' },
+          { label: 'Packing', value: orders.data?.counts.preparing ?? 0, hint: 'prepare' },
+          { label: 'Ready', value: orders.data?.counts.ready ?? 0, hint: 'dispatch' },
+          { label: 'With riders', value: orders.data?.counts.onTheWay ?? 0, hint: 'track' },
+        ].map((metric) => (
+          <div key={metric.label} className="card p-3">
+            <p className="label">{metric.label}</p>
+            <div className="mt-1 flex items-end justify-between gap-2"><p className="text-2xl font-bold tabular-nums text-forest-700">{metric.value}</p><span className="text-[11px] text-ink-500">{metric.hint}</span></div>
+          </div>
+        ))}
+      </section>
+
       {orders.isLoading ? <Skeleton className="h-32 w-full" /> : null}
 
       {!orders.isLoading && !list.length ? (
@@ -142,6 +156,8 @@ function OrderCard({
 }) {
   const user = useAuth((state) => state.user);
   const action = NEXT_ACTION[order.status];
+  const ageMinutes = Math.max(0, Math.round((Date.now() - new Date(order.createdAt).getTime()) / 60000));
+  const needsAttention = (order.status === 'PENDING' && ageMinutes >= 5) || (order.status === 'PREPARING' && ageMinutes >= 25);
   const [messages, setMessages] = useState<{ id: string; senderId: string; senderRole: string; body: string; createdAt: string }[]>([]);
   const [sending, setSending] = useState(false);
 
@@ -174,6 +190,13 @@ function OrderCard({
           </span>{' '}
           — prepare it to be ready just before then.
         </p>
+      ) : null}
+
+      {needsAttention ? (
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-clay-100 bg-clay-100/60 px-3 py-2 text-xs text-clay-600">
+          <span><strong>Needs attention:</strong> {order.status === 'PENDING' ? 'accept this order to protect the ETA' : 'preparation is taking longer than usual'}</span>
+          <span className="shrink-0 font-bold tabular-nums">{ageMinutes}m old</span>
+        </div>
       ) : null}
 
       <ul className="mt-3 space-y-1 text-sm">

@@ -36,6 +36,13 @@ export default function RiderDeliveryDetail() {
   const { order } = query.data;
   const shop = order.shop;
   const cashDue = order.paymentMethod === 'COD' ? order.total : 0;
+  const progress = [
+    { status: 'ACCEPTED', label: 'Assigned' },
+    { status: 'READY', label: 'Pickup ready' },
+    { status: 'ON_THE_WAY', label: 'On the way' },
+    { status: 'DELIVERED', label: 'Delivered' },
+  ];
+  const progressIndex = order.status === 'PREPARING' ? 0 : Math.max(0, progress.findIndex((step) => step.status === order.status));
 
   const startSimulation = async () => {
     try {
@@ -85,6 +92,21 @@ export default function RiderDeliveryDetail() {
           <p className="text-xs text-ink-700">Count it before you leave, and keep it safe until the shop settles.</p>
         </div>
       ) : null}
+
+      <section className="card p-4" aria-label="Delivery progress">
+        <div className="flex items-center justify-between gap-3">
+          <div><p className="label">Trip progress</p><p className="mt-1 text-sm font-semibold text-forest-800">{progress[progressIndex]?.label ?? 'Delivery assigned'}</p></div>
+          <span className="text-xs font-semibold text-ink-500">Step {Math.min(progressIndex + 1, progress.length)} of {progress.length}</span>
+        </div>
+        <div className="mt-4 grid grid-cols-4 gap-1">
+          {progress.map((step, index) => (
+            <div key={step.status} className="min-w-0">
+              <div className={`h-1.5 rounded-full ${index <= progressIndex ? 'bg-forest-600' : 'bg-cream-200'}`} />
+              <p className={`mt-2 truncate text-[11px] ${index <= progressIndex ? 'font-bold text-forest-700' : 'text-ink-500'}`}>{step.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <MapView
         center={[shop?.lat ?? order.deliveryAddress.lat, shop?.lng ?? order.deliveryAddress.lng]}

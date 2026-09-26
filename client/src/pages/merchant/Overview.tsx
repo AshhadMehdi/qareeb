@@ -99,6 +99,38 @@ export default function MerchantOverview() {
         />
       </section>
 
+      <section className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
+        <div className="card p-4">
+          <SectionHeading title="Operations pulse" subtitle="The next few minutes, at a glance" action={<Link to="/merchant/orders" className="btn btn-quiet text-xs">Open command center</Link>} />
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {[
+              { label: 'New', value: orders.data?.counts.pending ?? 0, tone: 'text-wheat-500', hint: 'accept now' },
+              { label: 'Preparing', value: orders.data?.counts.preparing ?? 0, tone: 'text-forest-700', hint: 'on the bench' },
+              { label: 'Ready', value: orders.data?.counts.ready ?? 0, tone: 'text-clay-600', hint: 'needs pickup' },
+              { label: 'On the way', value: orders.data?.counts.onTheWay ?? 0, tone: 'text-forest-700', hint: 'with riders' },
+            ].map((metric) => (
+              <div key={metric.label} className="rounded-2xl bg-cream-100 p-3">
+                <p className="label">{metric.label}</p>
+                <p className={`mt-1 text-2xl font-bold tabular-nums ${metric.tone}`}>{metric.value}</p>
+                <p className="mt-0.5 text-[11px] text-ink-500">{metric.hint}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="card border-forest-100 bg-forest-50 p-4">
+          <p className="label text-forest-600">Recommended next move</p>
+          <p className="mt-2 text-lg font-bold leading-tight text-forest-800">
+            {pending ? `Accept ${pending} new ${pending === 1 ? 'order' : 'orders'} before the prep clock slips.` : 'Keep the counter ready for the next local order.'}
+          </p>
+          <p className="mt-2 text-xs leading-5 text-ink-600">
+            {pending ? 'Confirm stock, start preparation, and keep customers inside a reliable arrival window.' : `${analytics.data?.lowStock.length ?? 0} low-stock items need attention · average order ${rupees(analytics.data?.window.averageOrderValue ?? 0)}.`}
+          </p>
+          <Link to={pending ? '/merchant/orders' : '/merchant/products'} className="btn btn-primary mt-4 w-full text-xs">
+            {pending ? 'Process live orders' : 'Check inventory'}
+          </Link>
+        </div>
+      </section>
+
       <section className="card p-4">
         <SectionHeading title="Sales trend" subtitle="Last 14 days, excluding cancelled orders" />
         <div className="h-56">
