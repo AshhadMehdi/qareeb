@@ -45,7 +45,9 @@ export function quoteZone(
   const km = roundKm(distanceKm(shop, destination));
   const sorted = [...zones].sort((a, b) => a.radiusKm - b.radiusKm);
   const ring = sorted.find((zone) => km <= zone.radiusKm) ?? null;
-  const eta = (ring?.etaMinutes ?? 0) || shop.prepTimeMin + Math.round(km * 3) + 10;
+  // Time to your gate = how long the shop needs to make it, plus the ride.
+  const travel = ring?.etaMinutes ?? Math.round(km * 3) + 10;
+  const eta = travel + shop.prepTimeMin;
 
   if (!ring) {
     return {

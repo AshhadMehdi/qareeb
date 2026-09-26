@@ -55,6 +55,26 @@ export function useShops(filters: ShopFilters) {
   });
 }
 
+export function useFeaturedShops(point: { lat: number; lng: number }) {
+  return useQuery({
+    queryKey: ['shops-featured', point.lat, point.lng],
+    queryFn: () => apiGet<{ shops: Shop[] }>(`/shops/featured?lat=${point.lat}&lng=${point.lng}&limit=12`),
+    staleTime: 60_000,
+  });
+}
+
+/** "People are ordering" rail — ranked by real order volume, featured as fallback. */
+export function usePopularProducts(point: { lat: number; lng: number }) {
+  return useQuery({
+    queryKey: ['products-popular', point.lat, point.lng],
+    queryFn: () =>
+      apiGet<{ products: (Product & { shop: Shop })[] }>(
+        `/shops/popular?lat=${point.lat}&lng=${point.lng}&limit=10`,
+      ),
+    staleTime: 60_000,
+  });
+}
+
 export function useShopCategories() {
   return useQuery({
     queryKey: ['shop-categories'],

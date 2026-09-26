@@ -155,7 +155,18 @@ export type Order = {
   createdAt: string;
   updatedAt: string;
   items: OrderItem[];
-  shop: { id: string; name: string; slug: string; lat: number; lng: number; addressLine: string; phone: string | null } | null;
+  shop: {
+    id: string;
+    name: string;
+    slug: string;
+    category?: string | null;
+    coverUrl?: string | null;
+    prepTimeMin?: number;
+    lat: number;
+    lng: number;
+    addressLine: string;
+    phone: string | null;
+  } | null;
   runner: { id: string; name: string; phone: string | null; lat: number | null; lng: number | null } | null;
   customer?: { id: string; name: string; phone: string | null } | null;
   hasReview: boolean;

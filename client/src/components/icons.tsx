@@ -128,3 +128,49 @@ export const IconGift = ({ className = base }: IconProps) => (
     <path d="M12 8S10.5 3.5 8 4.5 9 8 12 8s4-1.5 2.5-3.5C12.5 3.5 12 8 12 8z" />
   </svg>
 );
+
+export const IconHeart = ({ className = base }: IconProps) => (
+  <svg viewBox="0 0 24 24" className={className} {...common}>
+    <path d="M12 20s-7-4.4-7-9.3A4.2 4.2 0 0 1 12 7.6a4.2 4.2 0 0 1 7 3.1c0 4.9-7 9.3-7 9.3z" />
+  </svg>
+);
+
+export const IconClock = ({ className = base }: IconProps) => (
+  <svg viewBox="0 0 24 24" className={className} {...common}>
+    <circle cx="12" cy="12" r="8.2" />
+    <path d="M12 7.6V12l3 1.8" />
+  </svg>
+);
+
+export const IconBolt = ({ className = base }: IconProps) => (
+  <svg viewBox="0 0 24 24" className={className} {...common}>
+    <path d="M13.5 3 6 13h5l-.8 8L18 11h-5z" />
+  </svg>
+);
+
+export const IconRepeat = ({ className = base }: IconProps) => (
+  <svg viewBox="0 0 24 24" className={className} {...common}>
+    <path d="M4 9a6 6 0 0 1 6-6h7" />
+    <path d="m14 1.8 3 2.2-3 2.2" />
+    <path d="M20 15a6 6 0 0 1-6 6H7" />
+    <path d="m10 22.2-3-2.2 3-2.2" />
+  </svg>
+);
+
+export const IconPlus = ({ className = base }: IconProps) => (
+  <svg viewBox="0 0 24 24" className={className} {...common}>
+    <path d="M12 5.5v13M5.5 12h13" />
+  </svg>
+);
+
+export const IconChevron = ({ className = base }: IconProps) => (
+  <svg viewBox="0 0 24 24" className={className} {...common}>
+    <path d="m9 5 7 7-7 7" />
+  </svg>
+);
+
+export const IconStar = ({ className = base }: IconProps) => (
+  <svg viewBox="0 0 24 24" className={className} fill="currentColor" stroke="none">
+    <path d="m12 3.6 2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z" />
+  </svg>
+);

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { and, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
 import { getDb } from '../db/client.js';
-import { deliveryZones, favorites, products, reviews, shops, users } from '../db/schema.js';
+import { deliveryZones, favorites, orderItems, orders, products, reviews, shops, users } from '../db/schema.js';
 import { optionalAuth } from '../lib/auth.js';
 import { asyncHandler, notFound, ok } from '../lib/errors.js';
 import { isOpenNow, roundKm } from '../lib/geo.js';
@@ -10,6 +10,13 @@ import { quoteForShop, serializeProduct, serializeShop } from '../lib/serialize.
 export const shopsRouter = Router();
 
 const CATEGORY_LABELS: Record<string, string> = {
+  biryani: 'Biryani & Pulao',
+  karahi: 'Karahi & Handi',
+  bbq: 'BBQ & Tikka',
+  chapli: 'Chapli & Kebab',
+  pizza: 'Pizza',
+  burgers: 'Burgers',
+  cafe: 'Cafe & Chai',
   grocery: 'Karyana & Grocery',
   vegetables: 'Sabzi & Fruit',
   fruit: 'Fruit',
@@ -47,6 +54,82 @@ shopsRouter.get(
       }))
       .sort((a, b) => b.count - a.count);
     res.json(ok({ categories: data }));
+  }),
+);
+
+/**
+ * Home rail: what people are actually ordering nearby. Items are ranked by real
+ * order volume, then taken round-robin across shops so one busy karyana cannot
+ * fill the whole rail.
+ */
+shopsRouter.get(
+  '/popular',
+  optionalAuth,
+  asyncHandler(async (req, res) => {
+    const db = await getDb();
+    const point = parsePoint(req.query as Record<string, unknown>);
+    const limit = Math.min(Number(req.query.limit ?? 8) || 8, 24);
+
+    const ranked = await db
+      .select({
+        productId: orderItems.productId,
+        shopId: products.shopId,
+        orders: sql<number>`count(*)::int`,
+      })
+      .from(orderItems)
+      .innerJoin(orders, eq(orders.id, orderItems.orderId))
+      .innerJoin(products, eq(products.id, orderItems.productId))
+      .where(sql`${orders.createdAt} > now() - interval '21 days'`)
+      .groupBy(orderItems.productId, products.shopId)
+      .orderBy(desc(sql`count(*)`))
+      .limit(120);
+
+    // Round-robin: one item per shop, then a second pass, and so on.
+    const perShop = new Map<string, string[]>();
+    for (const row of ranked) {
+      if (!row.productId || !row.shopId) continue;
+      const list = perShop.get(row.shopId) ?? [];
+      list.push(row.productId);
+      perShop.set(row.shopId, list);
+    }
+    const chosen: string[] = [];
+    for (let round = 0; chosen.length < limit && round < 12; round += 1) {
+      for (const ids of perShop.values()) {
+        if (ids[round]) chosen.push(ids[round]!);
+        if (chosen.length >= limit) break;
+      }
+    }
+
+    const productRows = chosen.length
+      ? await db
+          .select({ product: products, shop: shops })
+          .from(products)
+          .innerJoin(shops, eq(products.shopId, shops.id))
+          .where(and(eq(shops.status, 'APPROVED'), eq(products.isAvailable, true), inArray(products.id, chosen)))
+      : [];
+
+    const order = new Map(chosen.map((id, index) => [id, index]));
+    productRows.sort((a, b) => (order.get(a.product.id) ?? 99) - (order.get(b.product.id) ?? 99));
+
+    const shopIds = [...new Set(productRows.map((row) => row.shop.id))];
+    const zones = shopIds.length
+      ? await db.select().from(deliveryZones).where(inArray(deliveryZones.shopId, shopIds))
+      : [];
+    const byShop = new Map<string, typeof zones>();
+    for (const zone of zones) {
+      const list = byShop.get(zone.shopId) ?? [];
+      list.push(zone);
+      byShop.set(zone.shopId, list);
+    }
+
+    res.json(
+      ok({
+        products: productRows.map((row) => ({
+          ...serializeProduct(row.product),
+          shop: serializeShop(row.shop, { quote: quoteForShop(row.shop, byShop.get(row.shop.id) ?? [], point) }),
+        })),
+      }),
+    );
   }),
 );
 
@@ -207,12 +290,13 @@ shopsRouter.get(
   asyncHandler(async (req, res) => {
     const db = await getDb();
     const point = parsePoint(req.query as Record<string, unknown>);
+    const limit = Math.min(Number(req.query.limit ?? 6) || 6, 16);
     const shopRows = await db
       .select()
       .from(shops)
       .where(eq(shops.status, 'APPROVED'))
       .orderBy(desc(shops.ratingAvg))
-      .limit(6);
+      .limit(limit);
     const ids = shopRows.map((row) => row.id);
     const zones = ids.length
       ? await db.select().from(deliveryZones).where(inArray(deliveryZones.shopId, ids))

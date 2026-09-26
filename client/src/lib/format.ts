@@ -101,3 +101,10 @@ export function initials(name: string): string {
 export function pluralize(count: number, one: string, many = `${one}s`): string {
   return `${count} ${count === 1 ? one : many}`;
 }
+
+/** Delivery windows read better as a range: 35 min → "30–40 min". */
+export function etaRange(minutes: number): string {
+  const low = Math.max(10, Math.round((minutes - 5) / 5) * 5);
+  const high = Math.round((minutes + 5) / 5) * 5;
+  return `${low}–${high} min`;
+}

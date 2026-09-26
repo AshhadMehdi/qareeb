@@ -1,10 +1,10 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { cartCount, useCart } from '../store/cart';
 import { hasRole, homeForRole, useAuth } from '../store/auth';
 import { useLocation } from '../store/location';
-import { useNotifications } from '../lib/queries';
-import { initials } from '../lib/format';
+import { useNotifications, useOrders } from '../lib/queries';
+import { initials, rupees } from '../lib/format';
 import { Modal } from './ui';
 import LocationPicker from './LocationPicker';
 import {
@@ -14,6 +14,7 @@ import {
   IconChart,
   IconChat,
   IconGift,
+  IconHeart,
   IconHome,
   IconPin,
   IconReceipt,
@@ -40,6 +41,14 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const notifications = useNotifications();
   const unread = isCustomer ? notifications.data?.unread ?? 0 : 0;
   const count = cartCount(groups);
+  const cartTotal = groups.reduce(
+    (sum, group) => sum + group.lines.reduce((lineSum, line) => lineSum + line.price * line.quantity, 0),
+    0,
+  );
+  const orders = useOrders(isCustomer ? 'ALL' : 'NONE');
+  const activeOrders = isCustomer
+    ? (orders.data?.orders ?? []).filter((order) => !['DELIVERED', 'CANCELLED'].includes(order.status)).length
+    : 0;
 
   const nav = useMemo<NavItem[]>(() => {
     if (hasRole(user, 'MERCHANT')) {
@@ -72,14 +81,16 @@ export default function AppShell({ children }: { children: ReactNode }) {
         { to: '/admin/audit', label: 'Audit', icon: <IconShield /> },
       ];
     }
+    // Home · Search · Favourites · Orders · Profile. The cart is contextual:
+    // it shows up as a bar the moment there is something to check out.
     return [
-      { to: '/home', label: 'Shops', icon: <IconHome /> },
+      { to: '/home', label: 'Home', icon: <IconHome /> },
       { to: '/search', label: 'Search', icon: <IconSearch /> },
-      { to: '/orders', label: 'Orders', icon: <IconReceipt /> },
-      { to: '/cart', label: 'Cart', icon: <IconCart />, badge: count },
-      { to: '/account', label: 'Account', icon: <IconUser /> },
+      { to: '/favorites', label: 'Favourites', icon: <IconHeart /> },
+      { to: '/orders', label: 'Orders', icon: <IconReceipt />, badge: activeOrders },
+      { to: '/account', label: 'Profile', icon: <IconUser /> },
     ];
-  }, [user, count]);
+  }, [user, count, activeOrders]);
 
   const mobileNav = nav.slice(0, 5);
 
@@ -219,6 +230,24 @@ export default function AppShell({ children }: { children: ReactNode }) {
           ))}
         </div>
       </nav>
+
+      {/* The cart only exists when it has something in it. */}
+      {isCustomer && count > 0 ? (
+        <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+3.75rem)] z-40 px-4 pb-3 lg:bottom-6 lg:px-0">
+          <div className="mx-auto max-w-6xl">
+            <Link
+              to="/cart"
+              className="flex items-center justify-between gap-3 rounded-2xl bg-forest-800 px-4 py-3 text-cream-50 shadow-paper"
+            >
+              <span className="flex items-center gap-2 text-sm font-bold">
+                <IconCart className="h-4 w-4" />
+                {count} {count === 1 ? 'item' : 'items'} · {rupees(cartTotal)}
+              </span>
+              <span className="rounded-full bg-cream-50 px-3 py-1.5 text-xs font-bold text-forest-800">View cart</span>
+            </Link>
+          </div>
+        </div>
+      ) : null}
 
       <Modal open={menuOpen} title="Your account" onClose={() => setMenuOpen(false)}>
         <div className="space-y-4">

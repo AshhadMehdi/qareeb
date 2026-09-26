@@ -74,7 +74,7 @@ export function quoteForShop(
     return {
       distanceKm: 0,
       deliveryFee: 0,
-      etaMinutes: shop.prepTimeMin + 15,
+      etaMinutes: shop.prepTimeMin + 20,
       deliverable: true,
       freeDelivery: false,
       zoneName: zones[0]?.name ?? null,
@@ -136,7 +136,10 @@ export function serializeOrder(
   order: OrderRow,
   extras: {
     items?: OrderItemRow[];
-    shop?: Pick<ShopRow, 'id' | 'name' | 'slug' | 'lat' | 'lng' | 'addressLine' | 'phone' | 'logoUrl'> | null;
+    shop?: Pick<
+      ShopRow,
+      'id' | 'name' | 'slug' | 'lat' | 'lng' | 'addressLine' | 'phone' | 'logoUrl' | 'coverUrl' | 'category' | 'prepTimeMin'
+    > | null;
     runner?: { id: string; name: string; phone: string | null; lat: number | null; lng: number | null } | null;
     customer?: { id: string; name: string; phone: string | null } | null;
     hasReview?: boolean;

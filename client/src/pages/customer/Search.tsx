@@ -1,20 +1,38 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ProductSearchCard, ShopCard } from '../../components/cards';
 import { EmptyState, SectionHeading, Skeleton } from '../../components/ui';
 import { IconSearch } from '../../components/icons';
 import { useSearch } from '../../lib/queries';
 import { useLocation } from '../../store/location';
 
-const SUGGESTIONS = ['milk', 'sabzi', 'chicken', 'atta', 'medicine', 'cake', 'panadol'];
+const SUGGESTIONS = ['biryani', 'karahi', 'bbq', 'burger', 'chai', 'milk', 'atta', 'cake'];
 
 export default function Search() {
   const point = useLocation((state) => state.point);
-  const [term, setTerm] = useState('');
-  const [debounced, setDebounced] = useState('');
+  const [params, setParams] = useSearchParams();
+  const initial = params.get('q') ?? '';
+  const [term, setTerm] = useState(initial);
+  const [debounced, setDebounced] = useState(initial);
+
+  // The home screen's craving chips link straight here with ?q=.
+  useEffect(() => {
+    const next = params.get('q') ?? '';
+    if (next && next !== term) {
+      setTerm(next);
+      setDebounced(next);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setDebounced(term), 250);
+    const timer = window.setTimeout(() => {
+      setDebounced(term);
+      if (term.trim().length >= 2) setParams({ q: term.trim() }, { replace: true });
+      else if (params.get('q')) setParams({}, { replace: true });
+    }, 250);
     return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [term]);
 
   const search = useSearch(debounced, point);
@@ -35,7 +53,7 @@ export default function Search() {
           value={term}
           autoFocus
           onChange={(event) => setTerm(event.target.value)}
-          placeholder="Try “milk”, “chicken” or “Panadol”"
+          placeholder="Biryani, karahi, chai, milk…"
         />
       </div>
 

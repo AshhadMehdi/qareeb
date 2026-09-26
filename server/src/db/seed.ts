@@ -80,6 +80,8 @@ type SeedProduct = {
   description?: string;
   stock?: number;
   featured?: boolean;
+  /** dish photography served from the client's /images folder */
+  image?: string;
 };
 
 type ProductTuple = [name: string, category: string, unit: string, price: number, emoji: string, extra?: Partial<SeedProduct>];
@@ -137,12 +139,12 @@ const MEAT: SeedProduct[] = toProducts([
 const BAKERY: SeedProduct[] = toProducts([
   ['Fresh Bakery Bread', 'Bread', 'large', 160, 'bread', { stock: 40, featured: true }],
   ['Cake Rusk', 'Bakery', '350 g', 320, 'cookie', { stock: 30 }],
-  ['Chocolate Fudge Cake', 'Cakes', '1 lb', 1400, 'cake', { stock: 8, featured: true, compareAt: 1600 }],
-  ['Vanilla Sponge Cake', 'Cakes', '1 lb', 1100, 'cake', { stock: 10 }],
+  ['Chocolate Fudge Cake', 'Cakes', '1 lb', 1400, 'cake', { stock: 8, featured: true, image: '/images/sweets.jpg', compareAt: 1600 }],
+  ['Vanilla Sponge Cake', 'Cakes', '1 lb', 1100, 'cake', { stock: 10, image: '/images/sweets.jpg' }],
   ['Chicken Patties', 'Savoury', 'piece', 120, 'pie', { stock: 35 }],
   ['Nan Khatai', 'Bakery', '500 g', 450, 'cookie', { stock: 24 }],
   ['Cream Roll', 'Sweets', 'piece', 60, 'ice-cream', { stock: 60 }],
-  ['Gulab Jamun', 'Sweets', '500 g', 620, 'sweet', { stock: 18, featured: true }],
+  ['Gulab Jamun', 'Sweets', '500 g', 620, 'sweet', { stock: 18, featured: true, image: '/images/sweets.jpg' }],
   ['Bakarkhani', 'Bread', 'piece', 90, 'flat bread', { stock: 28 }],
 ]);
 
@@ -159,12 +161,12 @@ const PHARMACY_SEHAT: SeedProduct[] = toProducts([
 ]);
 
 const DAIRY: SeedProduct[] = toProducts([
-  ['Raw Desi Milk', 'Milk', '1 litre', 240, 'milk', { stock: 50, featured: true }],
-  ['Dahi', 'Milk', '1 kg', 300, 'yogurt', { stock: 30 }],
+  ['Raw Desi Milk', 'Milk', '1 litre', 240, 'milk', { stock: 50, featured: true, image: '/images/dairy.jpg' }],
+  ['Dahi', 'Milk', '1 kg', 300, 'yogurt', { stock: 30, image: '/images/dairy.jpg' }],
   ['Lassi', 'Milk', '1 litre', 250, 'cup with straw', { stock: 25 }],
-  ['Butter', 'Dairy', '200 g', 550, 'butter', { stock: 18 }],
+  ['Butter', 'Dairy', '200 g', 550, 'butter', { stock: 18, image: '/images/dairy.jpg' }],
   ['Desi Ghee', 'Dairy', '1 kg', 3200, 'butter', { stock: 10, featured: true }],
-  ['Paneer', 'Cheese', '500 g', 900, 'cheese', { stock: 14 }],
+  ['Paneer', 'Cheese', '500 g', 900, 'cheese', { stock: 14, image: '/images/dairy.jpg' }],
   ['Cheese Slices', 'Cheese', '200 g', 700, 'cheese', { stock: 16 }],
   ['Fresh Cream', 'Dairy', '200 ml', 220, 'ice-cream', { stock: 22 }],
 ]);
@@ -197,6 +199,82 @@ const GENERAL: SeedProduct[] = toProducts([
 /* Shops                                                                      */
 /* -------------------------------------------------------------------------- */
 
+
+/* ---------------------------------------------------------------------------
+   Food catalogue. The neighbourhood shops above keep Qareeb useful; these
+   kitchens are what make the home screen feel like a food app.
+--------------------------------------------------------------------------- */
+const BIRYANI: SeedProduct[] = toProducts([
+  ['Chicken Biryani', 'Biryani', 'plate', 380, 'rice', { stock: 40, featured: true, image: '/images/biryani.jpg', description: 'Long-grain basmati layered with chicken, kewra and fried onion. Raita and salad included.' }],
+  ['Beef Biryani', 'Biryani', 'plate', 450, 'rice', { stock: 30, image: '/images/biryani.jpg' }],
+  ['Chicken Pulao', 'Biryani', 'plate', 340, 'rice', { stock: 30, image: '/images/biryani.jpg' }],
+  ['Sindhi Biryani', 'Biryani', 'plate', 420, 'rice', { stock: 24, image: '/images/biryani.jpg' }],
+  ['Biryani Family Deal', 'Deals', 'serves 4', 1450, 'rice', { stock: 12, image: '/images/biryani.jpg', compareAt: 1650, description: 'Four plates of chicken biryani, raita, salad and a bottle of drink.' }],
+  ['Raita', 'Sides', 'bowl', 80, 'bowl', { stock: 60 }],
+  ['Shami Kebab', 'Sides', '4 pieces', 240, 'meat', { stock: 20 }],
+  ['Soft Drink', 'Drinks', '1.5 litre', 180, 'drink', { stock: 50 }],
+]);
+
+const KARAHI: SeedProduct[] = toProducts([
+  ['Chicken Karahi', 'Karahi', 'half kg', 1250, 'meat', { stock: 18, featured: true, image: '/images/karahi.jpg', description: 'Cooked to order in a black wok with tomato, ginger and green chilli. Naan not included.' }],
+  ['Mutton Karahi', 'Karahi', 'half kg', 1950, 'meat', { stock: 10, image: '/images/karahi.jpg' }],
+  ['Chicken Handi', 'Karahi', 'half kg', 1150, 'meat', { stock: 16, image: '/images/karahi.jpg' }],
+  ['Daal Makhani', 'Curry', 'serves 2', 620, 'bowl', { stock: 20 }],
+  ['Garlic Naan', 'Bread', 'piece', 90, 'bread', { stock: 80 }],
+  ['Tandoori Naan', 'Bread', 'piece', 40, 'bread', { stock: 120 }],
+  ['Green Salad', 'Sides', 'bowl', 150, 'bowl', { stock: 30 }],
+  ['Kashmiri Chai', 'Drinks', 'cup', 180, 'drink', { stock: 40 }],
+]);
+
+const BBQ: SeedProduct[] = toProducts([
+  ['Mixed BBQ Platter', 'BBQ', 'serves 2', 1650, 'meat', { stock: 14, featured: true, image: '/images/bbq-platter.jpg', description: 'Seekh kebab, chicken tikka, lamb chops, chutney and onion rings.' }],
+  ['Chicken Tikka', 'BBQ', '2 pieces', 520, 'meat', { stock: 26, image: '/images/bbq-platter.jpg' }],
+  ['Seekh Kebab', 'BBQ', '4 sticks', 640, 'meat', { stock: 22, image: '/images/bbq-platter.jpg' }],
+  ['Lamb Chops', 'BBQ', '6 pieces', 1150, 'meat', { stock: 10, image: '/images/bbq-platter.jpg' }],
+  ['Malai Boti', 'BBQ', 'plate', 720, 'meat', { stock: 18, image: '/images/bbq-platter.jpg' }],
+  ['Roghni Naan', 'Bread', 'piece', 120, 'bread', { stock: 60 }],
+  ['Mint Chutney', 'Sides', 'bowl', 70, 'bowl', { stock: 60 }],
+]);
+
+const CHAPLI: SeedProduct[] = toProducts([
+  ['Peshawari Chapli Kebab', 'Kebab', '2 pieces', 650, 'meat', { stock: 22, featured: true, image: '/images/chapli-kebab.jpg', description: 'Coarse minced beef with coriander seed and tomato, shallow fried. Naan and chutney included.' }],
+  ['Chapli Kebab (single)', 'Kebab', '1 piece', 340, 'meat', { stock: 40 }],
+  ['Namkeen Boti', 'Kebab', 'plate', 780, 'meat', { stock: 14, image: '/images/chapli-kebab.jpg' }],
+  ['Kabuli Pulao', 'Rice', 'plate', 520, 'rice', { stock: 18 }],
+  ['Kabuli Naan', 'Bread', 'piece', 90, 'bread', { stock: 70 }],
+  ['Doodh Patti', 'Drinks', 'cup', 150, 'drink', { stock: 50 }],
+]);
+
+const PIZZA: SeedProduct[] = toProducts([
+  ['Chicken Tikka Pizza', 'Pizza', 'medium', 1150, 'pizza', { stock: 20, featured: true, image: '/images/pizza.jpg', description: 'Tandoori chicken, mozzarella, onion and green chilli on a wood-fired base.' }],
+  ['Fajita Pizza', 'Pizza', 'medium', 1250, 'pizza', { stock: 18, image: '/images/pizza.jpg' }],
+  ['Cheese Lover Pizza', 'Pizza', 'medium', 1050, 'pizza', { stock: 18, image: '/images/pizza.jpg' }],
+  ['Crown Crust Pizza', 'Pizza', 'large', 1750, 'pizza', { stock: 10, image: '/images/pizza.jpg' }],
+  ['Garlic Bread', 'Sides', '4 pieces', 380, 'bread', { stock: 30, image: '/images/pizza.jpg' }],
+  ['Chicken Wings', 'Sides', '6 pieces', 620, 'meat', { stock: 24, image: '/images/bbq-platter.jpg' }],
+  ['Soft Drink', 'Drinks', '1 litre', 160, 'drink', { stock: 40 }],
+]);
+
+const BURGER: SeedProduct[] = toProducts([
+  ['Zinger Burger', 'Burgers', 'piece', 480, 'burger', { stock: 35, featured: true, image: '/images/burger.jpg', description: 'Crispy fillet, sesame bun, mayo, lettuce and pickles.' }],
+  ['Beef Cheese Burger', 'Burgers', 'piece', 560, 'burger', { stock: 28, image: '/images/burger.jpg' }],
+  ['Chicken Cheese Burger', 'Burgers', 'piece', 520, 'burger', { stock: 30, image: '/images/burger.jpg' }],
+  ['Loaded Fries', 'Sides', 'regular', 420, 'fries', { stock: 30, image: '/images/burger.jpg' }],
+  ['French Fries', 'Sides', 'regular', 250, 'fries', { stock: 40, image: '/images/burger.jpg' }],
+  ['Chicken Nuggets', 'Sides', '6 pieces', 380, 'meat', { stock: 26 }],
+  ['Cold Coffee', 'Drinks', 'glass', 350, 'drink', { stock: 25 }],
+]);
+
+const CHAI: SeedProduct[] = toProducts([
+  ['Doodh Patti', 'Chai', 'cup', 150, 'drink', { stock: 60, featured: true, image: '/images/chai.jpg', description: 'Full-cream tea boiled slowly, served with a slice of cake or a samosa.' }],
+  ['Karak Chai', 'Chai', 'cup', 130, 'drink', { stock: 60, image: '/images/chai.jpg' }],
+  ['Green Tea', 'Chai', 'cup', 110, 'drink', { stock: 40 }],
+  ['Samosa', 'Snacks', '2 pieces', 120, 'bowl', { stock: 45, image: '/images/chai.jpg' }],
+  ['Chicken Patties', 'Snacks', 'piece', 180, 'bread', { stock: 30 }],
+  ['Chocolate Cake Slice', 'Cakes', 'slice', 320, 'cake', { stock: 20, image: '/images/chai.jpg' }],
+  ['Chai + Samosa Combo', 'Deals', 'serves 1', 240, 'drink', { stock: 40, image: '/images/chai.jpg', compareAt: 270 }],
+]);
+
 type SeedShop = {
   key: string;
   name: string;
@@ -215,7 +293,10 @@ type SeedShop = {
   products: SeedProduct[];
   hours?: Record<string, { open: string; close: string }>;
   deliveryMode?: 'PLATFORM_RIDER' | 'SHOP_DELIVERY';
+  cover?: string;
 };
+
+const KITCHEN_KEYS = ['biryani', 'shinwari', 'khyber', 'peshawari', 'pizzapoint', 'burgerlab', 'chaikhana'];
 
 const SHOPS: SeedShop[] = [
   {
@@ -242,6 +323,7 @@ const SHOPS: SeedShop[] = [
     ownerName: 'Naveed Ahmed',
     category: 'vegetables',
     tags: ['Fresh daily', 'Farm direct'],
+    cover: '/images/produce.jpg',
     addressLine: 'Sabzi Mandi, Mandian, Abbottabad',
     area: 'Mandian',
     lat: 34.1688,
@@ -293,6 +375,7 @@ const SHOPS: SeedShop[] = [
     ownerEmail: 'roshan@demo.com',
     ownerName: 'Zahid Hussain',
     category: 'bakery',
+    cover: '/images/sweets.jpg',
     tags: ['Bakery', 'Mithai', 'Birthday cakes'],
     addressLine: 'Fawara Chowk, Abbottabad Cantt',
     area: 'Fawara Chowk',
@@ -329,6 +412,7 @@ const SHOPS: SeedShop[] = [
     ownerEmail: 'doodh@demo.com',
     ownerName: 'Gul Rahman',
     category: 'dairy',
+    cover: '/images/dairy.jpg',
     tags: ['Fresh milk', 'Morning delivery', 'Desi ghee'],
     addressLine: 'Nawanshehr Road, Abbottabad',
     area: 'Nawanshehr',
@@ -376,6 +460,133 @@ const SHOPS: SeedShop[] = [
     products: [...GENERAL, ...KARYANA.slice(12, 16)],
     hours: { monday: { open: '07:00', close: '23:30' }, tuesday: { open: '07:00', close: '23:30' }, wednesday: { open: '07:00', close: '23:30' }, thursday: { open: '07:00', close: '23:30' }, friday: { open: '07:00', close: '23:30' }, saturday: { open: '07:00', close: '23:30' }, sunday: { open: '08:00', close: '23:00' } },
     deliveryMode: 'SHOP_DELIVERY',
+  },
+  /* Kitchens — the food-first half of the catalogue. --------------------- */
+  {
+    key: 'biryani',
+    name: 'Biryani Express',
+    ownerEmail: 'biryani@demo.com',
+    ownerName: 'Kamran Sheikh',
+    category: 'biryani',
+    tags: ['Biryani', 'Pulao', 'Family deals'],
+    addressLine: 'Jhangi Road, near Mandian Chowk, Abbottabad',
+    area: 'Jhangi',
+    lat: 34.1652,
+    lng: 73.2312,
+    prepTimeMin: 22,
+    minOrder: 300,
+    rating: 4.8,
+    ratingCount: 412,
+    products: BIRYANI,
+    cover: '/images/biryani.jpg',
+  },
+  {
+    key: 'shinwari',
+    name: 'Shinwari Karahi House',
+    ownerEmail: 'shinwari@demo.com',
+    ownerName: 'Gul Rahman',
+    category: 'karahi',
+    tags: ['Karahi', 'Handi', 'Cooked to order'],
+    addressLine: 'Main Mansehra Road, Supply Bazaar, Abbottabad',
+    area: 'Supply Bazaar',
+    lat: 34.1591,
+    lng: 73.2247,
+    prepTimeMin: 28,
+    minOrder: 500,
+    rating: 4.7,
+    ratingCount: 286,
+    products: KARAHI,
+    cover: '/images/karahi.jpg',
+  },
+  {
+    key: 'khyber',
+    name: 'Khyber BBQ & Tikka',
+    ownerEmail: 'khyber@demo.com',
+    ownerName: 'Adnan Afridi',
+    category: 'bbq',
+    tags: ['BBQ', 'Tikka', 'Charcoal grilled'],
+    addressLine: 'Kakul Road, opposite Ayub Medical College, Abbottabad',
+    area: 'Kakul Road',
+    lat: 34.1782,
+    lng: 73.2402,
+    prepTimeMin: 30,
+    minOrder: 500,
+    rating: 4.6,
+    ratingCount: 198,
+    products: BBQ,
+    cover: '/images/bbq-platter.jpg',
+  },
+  {
+    key: 'peshawari',
+    name: 'Peshawari Chapli Corner',
+    ownerEmail: 'chapli@demo.com',
+    ownerName: 'Rahim Bacha',
+    category: 'chapli',
+    tags: ['Chapli kebab', 'Kabuli pulao'],
+    addressLine: 'Nawan Shehr Road, near Fawara Chowk, Abbottabad',
+    area: 'Nawan Shehr',
+    lat: 34.1524,
+    lng: 73.2158,
+    prepTimeMin: 25,
+    minOrder: 300,
+    rating: 4.5,
+    ratingCount: 164,
+    products: CHAPLI,
+    cover: '/images/chapli-kebab.jpg',
+  },
+  {
+    key: 'pizzapoint',
+    name: 'Pizza Point',
+    ownerEmail: 'pizzapoint@demo.com',
+    ownerName: 'Faisal Iqbal',
+    category: 'pizza',
+    tags: ['Pizza', 'Wings', 'Wood fired'],
+    addressLine: 'Abbottabad Cantonment, near Fawara Chowk, Abbottabad',
+    area: 'Cantt',
+    lat: 34.1585,
+    lng: 73.2091,
+    prepTimeMin: 25,
+    minOrder: 600,
+    rating: 4.4,
+    ratingCount: 233,
+    products: PIZZA,
+    cover: '/images/pizza.jpg',
+  },
+  {
+    key: 'burgerlab',
+    name: 'Burger Lab',
+    ownerEmail: 'burgerlab@demo.com',
+    ownerName: 'Hamza Yousaf',
+    category: 'burgers',
+    tags: ['Burgers', 'Fries', 'Late night'],
+    addressLine: 'Jhangi Road, near Hafizabad Turn, Abbottabad',
+    area: 'Jhangi',
+    lat: 34.1706,
+    lng: 73.2348,
+    prepTimeMin: 20,
+    minOrder: 300,
+    rating: 4.3,
+    ratingCount: 147,
+    products: BURGER,
+    cover: '/images/burger.jpg',
+  },
+  {
+    key: 'chaikhana',
+    name: 'Chai Khana Cafe',
+    ownerEmail: 'chaikhana@demo.com',
+    ownerName: 'Maryam Bibi',
+    category: 'cafe',
+    tags: ['Chai', 'Cakes', 'Sit-in & delivery'],
+    addressLine: 'Kalakot Road, near Municipal Park, Abbottabad',
+    area: 'Kalakot',
+    lat: 34.1622,
+    lng: 73.2183,
+    prepTimeMin: 18,
+    minOrder: 200,
+    rating: 4.6,
+    ratingCount: 121,
+    products: CHAI,
+    cover: '/images/chai.jpg',
   },
   {
     key: 'amc',
@@ -519,6 +730,7 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<void> {
       ratingAvg: shop.rating,
       ratingCount: shop.ratingCount,
       status: 'APPROVED' as const,
+      coverUrl: shop.cover ?? null,
       deliveryMode: shop.deliveryMode ?? ('PLATFORM_RIDER' as const),
       tags: shop.tags,
       city: 'Abbottabad',
@@ -559,6 +771,7 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<void> {
         price: product.price,
         compareAtPrice: product.compareAt ?? null,
         emoji: product.emoji,
+        imageUrl: product.image ?? null,
         stock: product.stock ?? Math.round(between(8, 40)),
         isAvailable: true,
         isFeatured: product.featured ?? index < 3,
@@ -581,6 +794,10 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<void> {
       ['roshan', 'rider3@demo.com'],
       ['sabzi', 'rider2@demo.com'],
       ['doodh', 'rider4@demo.com'],
+      ['biryani', 'rider1@demo.com'],
+      ['shinwari', 'rider2@demo.com'],
+      ['khyber', 'rider3@demo.com'],
+      ['chaikhana', 'rider4@demo.com'],
     ].map(([shopKey, riderEmail]) => ({
       id: newId(),
       shopId: shopIdByKey.get(shopKey as string)!,
@@ -915,7 +1132,9 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<void> {
   for (let day = 13; day >= 1; day -= 1) {
     const perDay = Math.round(between(2, 4));
     for (let index = 0; index < perDay; index += 1) {
-      const shop = pick(SHOPS);
+      // People reach for cooked food more often than for a bag of atta, and the
+      // "popular right now" rail should reflect that.
+      const shop = random() < 0.6 ? pick(KITCHEN_KEYS.map((key) => SHOPS.find((entry) => entry.key === key)!)) : pick(SHOPS);
       const customerEmail = pick(CUSTOMERS).email;
       const status = pick(historyStatuses);
       await placeOrder({

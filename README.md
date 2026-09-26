@@ -1,10 +1,10 @@
-# Qareeb — local shops, delivered
+# Qareeb — local shops and kitchens, delivered
 
-A complete hyperlocal commerce platform inspired by *AroundYou* and built to go further: customers discover shops around them on a live map, order from **several shops in one checkout**, and watch their rider move in real time; merchants run their shop, inventory, delivery rings and riders from a dashboard; riders get a dedicated delivery app; admins oversee the whole platform.
+A complete hyperlocal commerce platform for a Pakistani city, built around one loop — **discover → decide → order → track → reorder**: customers discover shops around them on a live map, order from **several shops in one checkout**, and watch their rider move in real time; merchants run their shop, inventory, delivery rings and riders from a dashboard; riders get a dedicated delivery app; admins oversee the whole platform.
 
 Everything ships in this repo: **serverless API + PostgreSQL database + seed data + installable web app** for all four roles.
 
-> Default city is **Abbottabad, Pakistan** with realistic demo shops (karyana, sabzi mandi, meat, dairy, bakery, pharmacy…). Change it in Admin → Settings.
+> Default city is **Abbottabad, Pakistan**: ten neighbourhood shops (karyana, sabzi mandi, meat, dairy, bakery, pharmacy) plus seven kitchens (biryani, karahi, BBQ, chapli kebab, pizza, burgers, cafe). Cuisine names, PKR-first pricing, landmark-aware addresses and cash on delivery are part of the product, not decoration. Change the city in Admin → Settings.
 
 ---
 
@@ -13,8 +13,10 @@ Everything ships in this repo: **serverless API + PostgreSQL database + seed dat
 ## Feature tour
 
 ### Customer app (`/home`)
-- **Location-aware discovery** – GPS or a saved address; shops sorted by distance / rating / delivery fee, filtered by category, "open now" and radius. List **and map view** (Leaflet + CARTO tiles) with tap-to-preview cards.
-- **Search** across shops *and* products ("milk" finds every shop that sells milk), recent searches, suggestions.
+- **Home answers three questions** – *What do I want?* (cuisine quick actions: Biryani, BBQ, Karahi, Chapli Kebab, Pizza, Burgers, Cafe & Chai, Karyana), *Where from?* (Tonight's picks as large photo posters), *What now?* (Popular right now, Ready fastest, Everything nearby).
+- **Order again** – a delivered order from any kitchen becomes one tap back into the cart.
+- **Discovery list & map** – shops sorted by distance / rating / delivery fee / time, filtered by cuisine, "open now" and radius; Leaflet + CARTO map with tap-to-preview.
+- **Search** across shops *and* dishes ("biryani" finds every kitchen that cooks it), deep-linkable via `?q=`, recent searches, suggestions.
 - **Shop page** – hero, rating, ETA, delivery fee for *your* location, out-of-zone warning, opening hours, delivery rings, reviews, grouped products with sticky category chips, live stock.
 - **Multi-shop cart** – items grouped per shop, per-shop notes, quantity steppers; guests can browse and fill a cart, sign-in is asked only at checkout.
 - **Checkout** – saved addresses with map pin & reverse geocoding, live quote per shop (distance, zone, fee, free-delivery thresholds, minimum order, stock issues), promo codes, rider tips, **schedule the delivery** (next four half-hour slots today, or tomorrow 9 am), **payment methods: Cash on delivery, JazzCash, Easypaisa, Card (sandbox) and Qareeb points wallet**, order notes. One order per shop, linked by a group id.
@@ -64,6 +66,7 @@ Everything ships in this repo: **serverless API + PostgreSQL database + seed dat
 api/       Vercel function entry point (lazy-imports server/dist/serverless.js)
 server/    Express API, Drizzle PostgreSQL schema, applied SQL, seed data
 client/    React app (customer / merchant / rider / admin) + PWA assets
+client/public/images/   dish and shop photography used across the customer app
 scripts/   dev.mjs — starts the API and the web app together
 server/sql/schema.sql   generated, idempotent — applied once per boot
 ```
@@ -86,6 +89,7 @@ Password for local and hosted demo accounts: `password123` (also shown on the lo
 | Customer | `ali@demo.com` | has live orders, addresses, points |
 | Customer | `sara@demo.com`, `hassan@demo.com` | |
 | Merchant | `madina@demo.com` | Al-Madina Karyana Store (also `sabzi@`, `kakul@`, `mart@`, `roshan@`, `sehat@`, `doodh@`, `fruit@`, `shahzad@`, `amc@demo.com`) |
+| Kitchen | `biryani@demo.com` | Biryani Express (also `shinwari@`, `khyber@`, `chapli@`, `pizzapoint@`, `burgerlab@`, `chaikhana@demo.com`) |
 | Rider | `rider1@demo.com` … `rider4@demo.com` | rider1 is mid-delivery |
 | Admin | `admin@qareeb.app` | |
 
@@ -141,7 +145,7 @@ All endpoints are under `/api`, JSON in/out, `Authorization: Bearer <jwt>`. Erro
 - `realtime`: authenticated event feed (no WebSocket server)
 - `auth`: register, login, google, me, change-password
 - `users/me`: profile, addresses, favorites, notifications, push subscriptions, wallet, **referral stats, payout wallet & requests, support tickets**
-- `shops`: nearby search (`lat, lng, radius, q, category, sort, openNow`), categories, featured, detail (products, reviews, zones)
+- `shops`: nearby search (`lat, lng, radius, q, category, sort, openNow`), categories, featured (`limit`), **popular** (round-robin across shops by real 21-day order volume), detail (products, reviews, zones)
 - `orders`: quote, checkout (multi-shop), list, detail, cancel, review, messages
 - `merchant`: shop, zones, products (+bulk), orders & status, assign runner (`runnerId | "auto"`), runners, promos, analytics
 - `runner`: profile, location, deliveries & status, decline, earnings
@@ -150,6 +154,10 @@ All endpoints are under `/api`, JSON in/out, `Authorization: Bearer <jwt>`. Erro
 - Event feed: `order:created`, `order:updated`, `notification`, `chat:message`, `runner:location`, `shop:updated`
 
 ## Design notes
+- **Design system**: warm ivory paper, deep emerald `#063B2D` for brand and primary actions, muted gold `#C8A45D` for ratings and a single badge, charcoal `#191919` text. Green is an accent, not the wallpaper; the food photography carries the visual weight, and one faint jaali motif is the only ornament. Fraunces appears solely in the hero greeting, Plus Jakarta Sans everywhere else.
+- **Card hierarchy**: a shop card is photo, name, `⭐ rating · cuisine`, delivery window and fee, plus at most one badge (Popular / Free delivery / No minimum). Product tiles are photo, name, price, one add button.
+- **Bottom navigation**: Home, Search, Favourites, Orders, Profile. The cart is contextual — it appears as a bar the moment the cart has something in it.
+- **Delivery windows** are prep time + ride time, so a bakery and a karahi house quote honestly different times.
 - **Delivery rings**: each shop defines up to 6 concentric rings (`radiusKm → fee, freeAbove`). The first ring that reaches the customer sets the fee; beyond the largest ring the shop is shown but not deliverable.
 - **Order lifecycle**: `PENDING → ACCEPTED → PREPARING → READY → ON_THE_WAY → DELIVERED` (+ `CANCELLED`). Transitions are validated per role on the server; customers can cancel while pending or within a configurable window after acceptance; cancellations restock items and refund online/wallet payments.
 - **Auto-assign** scores riders by distance to the shop, current load and whether they belong to the shop's team.
