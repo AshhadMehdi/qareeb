@@ -104,6 +104,7 @@ function serializeAddress(row: typeof addresses.$inferSelect) {
     city: row.city,
     lat: row.lat,
     lng: row.lng,
+    landmark: row.landmark,
     instructions: row.instructions,
     isDefault: row.isDefault,
   };
@@ -141,6 +142,7 @@ usersRouter.post(
       city: input.city,
       lat: input.lat,
       lng: input.lng,
+      landmark: input.landmark ?? null,
       instructions: input.instructions ?? null,
       isDefault: input.isDefault ?? false,
       createdAt: new Date().toISOString(),
@@ -168,6 +170,7 @@ usersRouter.patch(
         ...(input.city ? { city: input.city } : {}),
         ...(input.lat !== undefined ? { lat: input.lat } : {}),
         ...(input.lng !== undefined ? { lng: input.lng } : {}),
+        ...(input.landmark !== undefined ? { landmark: input.landmark ?? null } : {}),
         ...(input.instructions !== undefined ? { instructions: input.instructions ?? null } : {}),
         ...(input.isDefault !== undefined ? { isDefault: input.isDefault } : {}),
       })

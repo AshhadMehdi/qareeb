@@ -6,7 +6,7 @@ import { ChatPanel, OrderTimeline, PaymentSummary } from '../../components/Order
 import { EmptyState, ErrorNote, SectionHeading, Skeleton, StatusPill } from '../../components/ui';
 import { IconChat, IconPin } from '../../components/icons';
 import { useCancelOrder, useOrder, useReviewOrder, useSendMessage } from '../../lib/queries';
-import { PAYMENT_LABELS, rupees } from '../../lib/format';
+import { PAYMENT_LABELS, initials, rupees } from '../../lib/format';
 import { useLiveRiders } from '../../lib/realtime';
 import { useAuth } from '../../store/auth';
 
@@ -150,6 +150,26 @@ export default function OrderTracking() {
         markers={markers}
       />
 
+      {/* Where it is going — landmark first, because that is how people give directions. */}
+      <div className="card flex items-start gap-3 p-4">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-forest-50 text-forest-700">
+          <IconPin className="h-4 w-4" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">Delivering to</p>
+          <p className="text-sm font-bold text-forest-800">
+            {order.deliveryAddress.label} · {order.deliveryAddress.line1}
+          </p>
+          <p className="text-xs text-ink-700">
+            {order.deliveryAddress.area ? `${order.deliveryAddress.area}, ` : ''}
+            {order.deliveryAddress.city}
+          </p>
+          {order.deliveryAddress.instructions ? (
+            <p className="mt-1 text-xs italic text-ink-500">{order.deliveryAddress.instructions}</p>
+          ) : null}
+        </div>
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-[1.1fr_1fr]">
         <section className="card p-4">
           <SectionHeading
@@ -159,14 +179,16 @@ export default function OrderTracking() {
           <OrderTimeline order={order} />
 
           {order.runner ? (
-            <div className="mt-4 rounded-2xl border border-cream-200 bg-cream-100 p-3">
+            <div className="mt-4 rounded-2xl border border-cream-300 bg-cream-50 p-3.5">
               <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-bold text-forest-800">{order.runner.name}</p>
-                  <p className="text-xs text-ink-500">
-                    Your rider
-                    {order.runner.phone ? ` · ${order.runner.phone}` : ''}
-                  </p>
+                <div className="flex items-center gap-3">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-forest-800 text-sm font-bold text-gold-200">
+                    {initials(order.runner.name)}
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-forest-800">{order.runner.name}</p>
+                    <p className="text-xs text-ink-500">Your rider</p>
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   {order.runner.phone ? (

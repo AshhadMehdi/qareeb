@@ -3,9 +3,47 @@ import { ORDER_STEPS, PAYMENT_LABELS, clockTime, rupees } from '../lib/format';
 import type { Order, PaymentMethod } from '../lib/types';
 import { Spinner } from './ui';
 
+/**
+ * The five states a customer actually asks about — processing (shop accept),
+ * rider assigned, en route, rider arriving, completed — rather than one
+ * ambiguous progress bar.
+ */
+const DELIVERY_STATES: { key: string; label: string; hint: string }[] = [
+  { key: 'PROCESSING', label: 'Order processing', hint: 'The kitchen has your order' },
+  { key: 'RIDER_ASSIGNED', label: 'Rider assigned', hint: 'A rider is coming to the shop' },
+  { key: 'EN_ROUTE', label: 'En route to you', hint: 'Your rider picked it up' },
+  { key: 'ARRIVING', label: 'Rider arriving', hint: 'Almost at your door' },
+  { key: 'COMPLETED', label: 'Completed', hint: 'Delivered' },
+];
+
+const STEP_COPY: Record<string, string> = {
+  PENDING: 'Order sent to the shop',
+  ACCEPTED: 'Shop accepted',
+  PREPARING: 'Being packed',
+  READY: 'Ready for the rider',
+  ON_THE_WAY: 'Rider on the way',
+  DELIVERED: 'Delivered',
+};
+
 export function OrderTimeline({ order }: { order: Order }) {
   const currentIndex = ORDER_STEPS.indexOf(order.status as (typeof ORDER_STEPS)[number]);
   const cancelled = order.status === 'CANCELLED';
+
+  // Which of the five states the order is in right now.
+  const stateIndex = (() => {
+    switch (order.status) {
+      case 'PENDING':
+      case 'ACCEPTED':
+      case 'PREPARING':
+      case 'READY':
+        return 0;
+      case 'ON_THE_WAY':
+        return 2;
+      default:
+        return order.status === 'DELIVERED' ? 4 : 0;
+    }
+  })();
+  const showing = stateIndex === 0 && order.runner ? 1 : stateIndex;
 
   if (cancelled) {
     return (
@@ -17,50 +55,86 @@ export function OrderTimeline({ order }: { order: Order }) {
     );
   }
 
+  const live = DELIVERY_STATES[showing]!;
+
   return (
-    <ol className="space-y-0">
-      {ORDER_STEPS.map((step, index) => {
-        const done = index <= currentIndex;
-        const event = order.statusHistory?.find((entry) => entry.status === step);
-        const isLast = index === ORDER_STEPS.length - 1;
-        return (
-          <li key={step} className="flex gap-3">
-            <div className="flex flex-col items-center">
-              <span
-                className={`mt-1 grid h-4 w-4 shrink-0 place-items-center rounded-full border-2 ${
-                  done ? 'border-forest-600 bg-forest-600' : 'border-cream-300 bg-cream-50'
-                }`}
-              />
-              {!isLast ? (
-                <span className={`w-0.5 flex-1 ${index < currentIndex ? 'bg-forest-600' : 'bg-cream-300'}`} />
-              ) : null}
-            </div>
-            <div className={`pb-4 ${isLast ? 'pb-0' : ''}`}>
-              <p className={`text-sm font-semibold ${done ? 'text-forest-800' : 'text-ink-500'}`}>
-                {STEP_COPY[step]}
-              </p>
-              {event ? (
-                <p className="text-xs text-ink-500">
-                  {clockTime(event.at)}
-                  {event.note ? ` · ${event.note}` : ''}
+    <div className="space-y-4">
+      {/* Where the order is, in one sentence. */}
+      <div className="rounded-2xl border border-forest-100 bg-forest-50 p-4">
+        <p className="text-base font-bold text-forest-800">{live.label}</p>
+        <p className="mt-0.5 text-xs text-ink-700">{live.hint}</p>
+      </div>
+
+      {/* The five states. */}
+      <ol className="space-y-0">
+        {DELIVERY_STATES.map((state, index) => {
+          const done = index <= showing;
+          const current = index === showing;
+          const isLast = index === DELIVERY_STATES.length - 1;
+          return (
+            <li key={state.key} className="flex gap-3">
+              <div className="flex flex-col items-center">
+                <span
+                  className={`mt-1 grid h-4 w-4 shrink-0 place-items-center rounded-full border-2 ${
+                    done ? 'border-forest-600 bg-forest-600' : 'border-cream-300 bg-cream-50'
+                  }`}
+                >
+                  {current ? <span className="h-1.5 w-1.5 rounded-full bg-cream-50" /> : null}
+                </span>
+                {!isLast ? (
+                  <span className={`w-0.5 flex-1 ${index < showing ? 'bg-forest-600' : 'bg-cream-300'}`} />
+                ) : null}
+              </div>
+              <div className={isLast ? 'pb-0' : 'pb-4'}>
+                <p className={`text-sm ${current ? 'font-bold text-forest-800' : done ? 'font-semibold text-forest-800' : 'text-ink-500'}`}>
+                  {state.label}
                 </p>
-              ) : null}
-            </div>
-          </li>
-        );
-      })}
-    </ol>
+                <p className="text-xs text-ink-500">{state.hint}</p>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+
+      <details className="rounded-2xl border border-cream-300 bg-cream-50 p-3.5">
+        <summary className="cursor-pointer text-xs font-bold text-forest-700">Full history</summary>
+        <ol className="mt-3 space-y-0">
+          {ORDER_STEPS.map((step, index) => {
+            const done = index <= currentIndex;
+            const event = order.statusHistory?.find((entry) => entry.status === step);
+            const isLast = index === ORDER_STEPS.length - 1;
+            return (
+              <li key={step} className="flex gap-3">
+                <div className="flex flex-col items-center">
+                  <span
+                    className={`mt-1 grid h-3 w-3 shrink-0 place-items-center rounded-full border-2 ${
+                      done ? 'border-forest-600 bg-forest-600' : 'border-cream-300 bg-cream-50'
+                    }`}
+                  />
+                  {!isLast ? (
+                    <span className={`w-0.5 flex-1 ${index < currentIndex ? 'bg-forest-600' : 'bg-cream-300'}`} />
+                  ) : null}
+                </div>
+                <div className={isLast ? 'pb-0' : 'pb-3'}>
+                  <p className={`text-xs ${done ? 'font-semibold text-forest-800' : 'text-ink-500'}`}>
+                    {STEP_COPY[step]}
+                  </p>
+                  {event ? (
+                    <p className="text-[11px] text-ink-500">
+                      {clockTime(event.at)}
+                      {event.note ? ` · ${event.note}` : ''}
+                    </p>
+                  ) : null}
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      </details>
+    </div>
   );
 }
 
-const STEP_COPY: Record<string, string> = {
-  PENDING: 'Order sent to the shop',
-  ACCEPTED: 'Shop accepted',
-  PREPARING: 'Being packed',
-  READY: 'Ready for the rider',
-  ON_THE_WAY: 'Rider on the way',
-  DELIVERED: 'Delivered',
-};
 
 export function ChatPanel({
   order,

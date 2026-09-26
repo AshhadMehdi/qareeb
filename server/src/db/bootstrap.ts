@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { env } from '../env.js';
 import { getHandle } from './client.js';
 
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 const LOCK_KEY = 918_273_645;
 
 const schemaSqlUrl = new URL('../../sql/schema.sql', import.meta.url);

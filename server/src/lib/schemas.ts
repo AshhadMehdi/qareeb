@@ -30,6 +30,7 @@ export const addressInputSchema = z.object({
   city: z.string().trim().min(2).max(80).default('Abbottabad'),
   lat: latSchema,
   lng: lngSchema,
+  landmark: z.string().trim().max(120).nullish(),
   instructions: z.string().trim().max(300).nullish(),
   phone: z.string().trim().max(20).nullish(),
   isDefault: z.boolean().optional(),

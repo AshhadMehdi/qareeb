@@ -145,6 +145,7 @@ type InlineAddress = {
   city?: string;
   lat: number;
   lng: number;
+  landmark?: string | null;
   instructions?: string | null;
 };
 
@@ -163,6 +164,7 @@ function resolveAddressSnapshot(
     city: source.city ?? 'Abbottabad',
     lat: source.lat,
     lng: source.lng,
+    landmark: source.landmark ?? null,
     instructions: source.instructions ?? null,
     phone,
   };
@@ -298,6 +300,7 @@ ordersRouter.post(
               city: saved.city,
               lat: saved.lat,
               lng: saved.lng,
+              landmark: saved.landmark,
               instructions: saved.instructions,
             }
           : null,

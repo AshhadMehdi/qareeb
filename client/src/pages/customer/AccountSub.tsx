@@ -66,6 +66,9 @@ export function Addresses() {
                   {address.line1}
                   {address.area ? `, ${address.area}` : ''}, {address.city}
                 </p>
+                {address.landmark ? (
+                  <p className="mt-0.5 text-xs font-semibold text-forest-700">{address.landmark}</p>
+                ) : null}
                 {address.instructions ? (
                   <p className="mt-1 text-xs text-ink-500">“{address.instructions}”</p>
                 ) : null}

@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ProductRow } from '../../components/cards';
+import DishSheet from '../../components/DishSheet';
 import { EmptyState, ErrorNote, SectionHeading, Skeleton, Stars, Tag } from '../../components/ui';
 import { useShop } from '../../lib/queries';
 import { apiPost } from '../../lib/api';
@@ -9,6 +10,7 @@ import { distance, rupees, timeAgo } from '../../lib/format';
 import { cartCount, cartSubtotal, groupSubtotal, useCart } from '../../store/cart';
 import { useLocation } from '../../store/location';
 import { useAuth } from '../../store/auth';
+import type { Product } from '../../lib/types';
 
 export default function ShopPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -17,6 +19,7 @@ export default function ShopPage() {
   const token = useAuth((state) => state.token);
   const navigate = useNavigate();
   const [favoriteBusy, setFavoriteBusy] = useState(false);
+  const [dish, setDish] = useState<Product | null>(null);
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   const query = useShop(slug, point);
@@ -175,6 +178,7 @@ export default function ShopPage() {
                       key={product.id}
                       product={product}
                       shop={{ id: shop.id, name: shop.name, slug: shop.slug }}
+                      onOpen={() => setDish(product)}
                     />
                   ))}
                 </div>
@@ -185,6 +189,14 @@ export default function ShopPage() {
       ) : (
         <EmptyState title="No products listed yet" body="The shop owner has not added items to this catalogue." />
       )}
+
+      {dish ? (
+        <DishSheet
+          product={dish}
+          shop={{ id: shop.id, name: shop.name, slug: shop.slug, ratingAvg: shop.ratingAvg, ratingCount: shop.ratingCount }}
+          onClose={() => setDish(null)}
+        />
+      ) : null}
 
       {query.data?.reviews.length ? (
         <section className="card p-4">

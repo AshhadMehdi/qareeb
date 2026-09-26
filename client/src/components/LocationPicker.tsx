@@ -10,6 +10,15 @@ import type { Address } from '../lib/types';
 import MapView from './MapView';
 import { ErrorNote, Field, Modal, Spinner } from './ui';
 
+const LANDMARKS = [
+  'Near Ayub Medical College',
+  'Near Fawara Chowk',
+  'Opposite PSO pump',
+  'Near PMA Gate',
+  'Behind Mandian Bus Stand',
+  'Near Municipal Park',
+];
+
 const AREAS = [
   'Mandian',
   'Supply Bazaar',
@@ -168,6 +177,7 @@ export function AddressForm({
     line1: initial?.line1 ?? '',
     area: initial?.area ?? '',
     city: initial?.city ?? 'Abbottabad',
+    landmark: initial?.landmark ?? '',
     instructions: initial?.instructions ?? '',
     isDefault: initial?.isDefault ?? false,
   });
@@ -232,14 +242,33 @@ export function AddressForm({
         />
       </Field>
 
-      <Field label="Rider instructions" hint="Optional — gate colour, landmark, who to ask for">
+      <Field label="Landmark" hint="Optional — the thing your rider will actually recognise">
+        <input
+          className="input"
+          value={form.landmark ?? ''}
+          onChange={(event) => setForm({ ...form, landmark: event.target.value })}
+          placeholder="Near Ayub Medical College"
+          list="qareeb-landmarks"
+        />
+        <datalist id="qareeb-landmarks">
+          {LANDMARKS.map((landmark) => (
+            <option key={landmark} value={landmark} />
+          ))}
+        </datalist>
+      </Field>
+
+      <Field label="Delivery instructions" hint="Optional — what to do when the rider arrives">
         <input
           className="input"
           value={form.instructions ?? ''}
           onChange={(event) => setForm({ ...form, instructions: event.target.value })}
-          placeholder="Green gate next to the chemist"
+          placeholder="Call me when you're outside, green gate next to the chemist"
         />
       </Field>
+
+      <p className="text-xs text-ink-500">
+        Where should we deliver? Save this once and checkout takes one tap.
+      </p>
 
       <div>
         <div className="mb-1.5 flex items-center justify-between">

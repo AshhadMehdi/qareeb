@@ -240,15 +240,29 @@ export default function Checkout() {
         </div>
       </section>
 
-      {/* per-shop baskets ------------------------------------------------- */}
+      {/* One review screen: your order, then payment, then the bill. */}
+      <div className="flex items-center gap-2 pt-1">
+        <span className="h-px flex-1 bg-cream-300" />
+        <span className="text-xs font-bold uppercase tracking-wide text-ink-500">Your order</span>
+        <span className="h-px flex-1 bg-cream-300" />
+      </div>
+
       {quote.isLoading ? <Skeleton className="h-40 w-full" /> : null}
 
       {quote.data?.groups.map((group) => (
         <section key={group.shopId} className="card p-4">
-          <SectionHeading
-            title={group.shop.name}
-            subtitle={`${group.etaMinutes} min · ${group.distanceKm} km${group.zoneName ? ` · ${group.zoneName}` : ''}`}
-          />
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-forest-800">{group.shop.name}</p>
+              <p className="text-xs text-ink-500">
+                Arrives in about {group.etaMinutes} min · {group.distanceKm} km away
+                {group.zoneName ? ` · ${group.zoneName}` : ''}
+              </p>
+            </div>
+            <Link to={`/shop/${group.shop.slug}`} className="text-xs font-bold text-forest-600 underline underline-offset-4">
+              Edit
+            </Link>
+          </div>
 
           {!group.deliverable ? (
             <ErrorNote>{group.shop.name} does not deliver to this address yet.</ErrorNote>
@@ -396,7 +410,7 @@ export default function Checkout() {
             <p className="text-xs text-ink-500">
               {summary ? `${rupees(summary.subtotal)} items + ${rupees(summary.deliveryFee)} delivery + ${rupees(summary.serviceFee)} fee` : 'Calculating…'}
             </p>
-            <p className="text-lg font-bold text-forest-800">{rupees(payable)}</p>
+            <p className="text-xl font-bold tabular-nums text-forest-800">{rupees(payable)}</p>
           </div>
           <button
             type="button"

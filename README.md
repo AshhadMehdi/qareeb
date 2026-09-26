@@ -18,9 +18,11 @@ Everything ships in this repo: **serverless API + PostgreSQL database + seed dat
 - **Discovery list & map** – shops sorted by distance / rating / delivery fee / time, filtered by cuisine, "open now" and radius; Leaflet + CARTO map with tap-to-preview.
 - **Search** across shops *and* dishes ("biryani" finds every kitchen that cooks it), deep-linkable via `?q=`, recent searches, suggestions.
 - **Shop page** – hero, rating, ETA, delivery fee for *your* location, out-of-zone warning, opening hours, delivery rings, reviews, grouped products with sticky category chips, live stock.
+- **Dish sheet** – tapping a dish opens the premium view: large photograph, the kitchen's description, quantity, a note for the kitchen (*less spicy, extra chutney*), and one priced action — `Add to cart · Rs 1,140` — pinned to the bottom so it never scrolls away.
 - **Multi-shop cart** – items grouped per shop, per-shop notes, quantity steppers; guests can browse and fill a cart, sign-in is asked only at checkout.
-- **Checkout** – saved addresses with map pin & reverse geocoding, live quote per shop (distance, zone, fee, free-delivery thresholds, minimum order, stock issues), promo codes, rider tips, **schedule the delivery** (next four half-hour slots today, or tomorrow 9 am), **payment methods: Cash on delivery, JazzCash, Easypaisa, Card (sandbox) and Qareeb points wallet**, order notes. One order per shop, linked by a group id.
-- **Live tracking** – status timeline, rider on the map with smooth motion, ETA, call / WhatsApp / **in-app chat** with the rider and shop, cancel window, receipt, reorder.
+- **Addresses built for Pakistan** – label, house/street, area, **landmark** (*Near Ayub Medical College*, with suggestions) and delivery instructions (*call me when you're outside*). The landmark travels with the order, so the rider sees it on the tracking screen, not just a house number.
+- **Checkout in one scroll** – saved addresses with map pin & reverse geocoding, live quote per shop (distance, zone, fee, free-delivery thresholds, minimum order, stock issues), promo codes, rider tips, **schedule the delivery** (next four half-hour slots today, or tomorrow 9 am), **payment methods: Cash on delivery, JazzCash, Easypaisa, Card (sandbox) and Qareeb points wallet**, order notes. One order per shop, linked by a group id.
+- **Live tracking** – the five states people actually ask about (**order processing → rider assigned → en route → rider arriving → completed**) as a single headline plus a ring, with the full six-step history collapsed underneath. Rider card with photo-initials and call / WhatsApp / chat, a **Delivering to** card that leads with the landmark, rider on the map with smooth motion, ETA, cancel window, receipt, reorder.
 - **Refer & earn** – every account gets a shareable invite code (`ALI-XXXX`, also accepted as `?ref=` on signup). Both sides are rewarded in points once the invited friend's **first order is delivered**; *Invite friends* shows invited / converted / earned.
 - **Help centre** – open a support ticket from your orders or account, priority + topic, chat it through with the platform team, close it when solved.
 - Order history, favourites, saved addresses, loyalty **points wallet**, notification centre, installable **PWA** (offline shell; web-push subscriptions are accepted by the API).
@@ -69,6 +71,8 @@ client/    React app (customer / merchant / rider / admin) + PWA assets
 client/public/images/   dish and shop photography used across the customer app
 scripts/   dev.mjs — starts the API and the web app together
 server/sql/schema.sql   generated, idempotent — applied once per boot
+                        (CREATE TABLE IF NOT EXISTS + ADD COLUMN IF NOT EXISTS,
+                        so a schema change upgrades an existing database in place)
 ```
 
 ---
@@ -158,6 +162,7 @@ All endpoints are under `/api`, JSON in/out, `Authorization: Bearer <jwt>`. Erro
 - **Card hierarchy**: a shop card is photo, name, `⭐ rating · cuisine`, delivery window and fee, plus at most one badge (Popular / Free delivery / No minimum). Product tiles are photo, name, price, one add button.
 - **Bottom navigation**: Home, Search, Favourites, Orders, Profile. The cart is contextual — it appears as a bar the moment the cart has something in it.
 - **Delivery windows** are prep time + ride time, so a bakery and a karahi house quote honestly different times.
+- **Landmarks first**: the address form asks for the landmark your rider will actually recognise and offers common Abbottabad ones; it is stored on the address and copied onto the order snapshot at checkout.
 - **Delivery rings**: each shop defines up to 6 concentric rings (`radiusKm → fee, freeAbove`). The first ring that reaches the customer sets the fee; beyond the largest ring the shop is shown but not deliverable.
 - **Order lifecycle**: `PENDING → ACCEPTED → PREPARING → READY → ON_THE_WAY → DELIVERED` (+ `CANCELLED`). Transitions are validated per role on the server; customers can cancel while pending or within a configurable window after acceptance; cancellations restock items and refund online/wallet payments.
 - **Auto-assign** scores riders by distance to the shop, current load and whether they belong to the shop's team.

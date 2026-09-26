@@ -268,10 +268,13 @@ export function ProductRow({
   product,
   shop,
   compact = false,
+  onOpen,
 }: {
   product: Product;
   shop: { id: string; name: string; slug: string };
   compact?: boolean;
+  /** tapping the row opens the dish sheet; the Add button still adds directly */
+  onOpen?: () => void;
 }) {
   const groups = useCart((state) => state.groups);
   const add = useCart((state) => state.add);
@@ -281,14 +284,25 @@ export function ProductRow({
 
   return (
     <div className={`flex items-center gap-3 ${compact ? 'py-2.5' : 'py-3.5'}`}>
-      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-forest-800">
+      <button
+        type="button"
+        onClick={onOpen}
+        disabled={!onOpen}
+        aria-label={onOpen ? `Open ${product.name}` : undefined}
+        className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-forest-800 disabled:cursor-default"
+      >
         {product.imageUrl ? (
           <img src={product.imageUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
         ) : (
           <Monogram name={product.name} className="h-full w-full" />
         )}
-      </div>
-      <div className="min-w-0 flex-1">
+      </button>
+      <button
+        type="button"
+        onClick={onOpen}
+        disabled={!onOpen}
+        className="min-w-0 flex-1 text-left disabled:cursor-default"
+      >
         <p className="truncate text-sm font-semibold text-ink-900">{product.name}</p>
         {product.description ? (
           <p className="line-clamp-2 text-xs text-ink-500">{product.description}</p>
@@ -304,7 +318,7 @@ export function ProductRow({
             <span className="text-xs text-ink-500 line-through">{rupees(product.compareAtPrice!)}</span>
           ) : null}
         </p>
-      </div>
+      </button>
       {product.stock <= 0 ? (
         <span className="chip border-cream-300 text-ink-500">Sold out</span>
       ) : quantity > 0 ? (

@@ -31,6 +31,7 @@ export type Address = {
   city: string;
   lat: number;
   lng: number;
+  landmark?: string | null;
   instructions: string | null;
   isDefault?: boolean;
 };
@@ -139,6 +140,7 @@ export type Order = {
     city: string;
     lat: number;
     lng: number;
+    landmark?: string | null;
     instructions?: string | null;
     phone?: string | null;
   };

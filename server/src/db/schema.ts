@@ -51,6 +51,8 @@ export type DeliveryAddressSnapshot = {
   city: string;
   lat: number;
   lng: number;
+  /** "Near Ayub Medical College" — how people actually give directions here. */
+  landmark?: string | null;
   instructions?: string | null;
   phone?: string | null;
 };
@@ -131,6 +133,7 @@ export const addresses = pgTable(
     city: text('city').notNull().default('Abbottabad'),
     lat: doublePrecision('lat').notNull(),
     lng: doublePrecision('lng').notNull(),
+    landmark: text('landmark'),
     instructions: text('instructions'),
     isDefault: boolean('is_default').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })

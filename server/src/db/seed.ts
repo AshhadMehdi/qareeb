@@ -818,6 +818,7 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<void> {
       city: 'Abbottabad',
       lat: 34.16880,
       lng: 73.22650,
+      landmark: 'Near Fawara Chowk',
       instructions: 'Green gate next to the chemist. Ring the bell twice.',
       isDefault: true,
       createdAt: now,
@@ -831,7 +832,8 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<void> {
       city: 'Abbottabad',
       lat: 34.15960,
       lng: 73.22030,
-      instructions: null,
+      landmark: 'Opposite Ayub Medical College gate',
+      instructions: 'Parking is at the back; ask for the second floor.',
       isDefault: false,
       createdAt: now,
     },
@@ -844,6 +846,7 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<void> {
       city: 'Abbottabad',
       lat: 34.15260,
       lng: 73.22950,
+      landmark: 'Near Jinnahabad Bridge',
       instructions: 'Call on arrival, gate is locked.',
       isDefault: true,
       createdAt: now,
@@ -857,6 +860,7 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<void> {
       city: 'Abbottabad',
       lat: 34.17990,
       lng: 73.24180,
+      landmark: 'Near PMA Gate',
       instructions: null,
       isDefault: true,
       createdAt: now,
@@ -1011,8 +1015,8 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<void> {
     const shopId = shopIdByKey.get(input.shopKey)!;
     const addressRow = {
       ali: { label: 'Home', line1: 'House 42, Street 3, Mandian', area: 'Mandian', city: 'Abbottabad', lat: 34.1688, lng: 73.2265, instructions: 'Green gate next to the chemist.' },
-      sara: { label: 'Home', line1: 'Flat 6, Jinnahabad Heights', area: 'Jinnahabad', city: 'Abbottabad', lat: 34.1526, lng: 73.2295, instructions: null },
-      hassan: { label: 'Home', line1: 'Quarter 9, Kakul Road', area: 'Kakul', city: 'Abbottabad', lat: 34.1799, lng: 73.2418, instructions: null },
+      sara: { label: 'Home', line1: 'Flat 6, Jinnahabad Heights', area: 'Jinnahabad', city: 'Abbottabad', lat: 34.1526, lng: 73.2295, landmark: 'Near Jinnahabad Bridge', instructions: null },
+      hassan: { label: 'Home', line1: 'Quarter 9, Kakul Road', area: 'Kakul', city: 'Abbottabad', lat: 34.1799, lng: 73.2418, landmark: 'Near PMA Gate', instructions: 'Call when you reach the check post.' },
     }[input.customerEmail.split('@')[0] as 'ali' | 'sara' | 'hassan'];
 
     const catalogue = productRowsByShop.get(shopId)!;

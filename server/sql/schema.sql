@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS "addresses" (
 	"city" text DEFAULT 'Abbottabad' NOT NULL,
 	"lat" double precision NOT NULL,
 	"lng" double precision NOT NULL,
+	"landmark" text,
 	"instructions" text,
 	"is_default" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
@@ -33,6 +34,8 @@ ALTER TABLE "addresses" ADD COLUMN IF NOT EXISTS "city" text DEFAULT 'Abbottabad
 ALTER TABLE "addresses" ADD COLUMN IF NOT EXISTS "lat" double precision;
 
 ALTER TABLE "addresses" ADD COLUMN IF NOT EXISTS "lng" double precision;
+
+ALTER TABLE "addresses" ADD COLUMN IF NOT EXISTS "landmark" text;
 
 ALTER TABLE "addresses" ADD COLUMN IF NOT EXISTS "instructions" text;
 
