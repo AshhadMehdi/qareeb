@@ -1379,7 +1379,15 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<void> {
     .where(eq(runnerProfiles.userId, userIdByEmail.get('rider2@demo.com')!))
     .limit(1);
   const kamranOwed = Math.max(0, Math.round(Number(kamran?.fees ?? 0) - Number(kamranProfile?.cashInHand ?? 0)));
-  const requestedAmount = Math.floor((kamranOwed * 0.6) / 50) * 50;
+  // A rider cashes out the minimum that is worth a transfer, not their whole balance.
+  const requestedAmount = kamranOwed >= 500 ? 500 : 0;
+
+  const [biryaniOwed] = await db
+    .select({ subtotal: sql<number>`coalesce(sum(${orders.subtotal}), 0)::float` })
+    .from(orders)
+    .where(and(eq(orders.shopId, shopIdByKey.get('biryani')!), eq(orders.status, 'DELIVERED')));
+  const biryaniNet = Math.round(Number(biryaniOwed?.subtotal ?? 0) * (1 - DEFAULT_SETTINGS.commissionPct / 100));
+  const biryaniRequest = Math.floor((biryaniNet * 0.4) / 500) * 500;
 
   const payoutRows: (typeof payoutRequests.$inferInsert)[] = [];
   if (settledAmount >= 500) {
@@ -1414,6 +1422,22 @@ export async function seedDemoData(options: SeedOptions = {}): Promise<void> {
       note: null,
       createdAt: iso(1, 20),
       updatedAt: iso(1, 20),
+    });
+  }
+  if (biryaniRequest >= 500) {
+    payoutRows.push({
+      id: newId(),
+      userId: userIdByEmail.get('biryani@demo.com')!,
+      role: 'MERCHANT' as UserRole,
+      shopId: shopIdByKey.get('biryani')!,
+      amount: biryaniRequest,
+      method: 'JAZZCASH',
+      accountTitle: 'Biryani Express',
+      accountNumber: '0333 2211004',
+      status: 'PENDING',
+      note: null,
+      createdAt: iso(2, 18),
+      updatedAt: iso(2, 18),
     });
   }
   if (payoutRows.length) await db.insert(payoutRequests).values(payoutRows);
