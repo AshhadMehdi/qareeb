@@ -11,10 +11,26 @@ import { getHandle } from './client.js';
 const SCHEMA_VERSION = 3;
 const LOCK_KEY = 918_273_645;
 
-const schemaSqlUrl = new URL('../../sql/schema.sql', import.meta.url);
+/**
+ * `sql/schema.sql` lives in two places depending on how this file is being run:
+ *   - from source (`tsx src/index.ts`)      → server/sql/schema.sql
+ *   - compiled (`node dist/index.js`)       → server/dist/sql/schema.sql
+ * and on Vercel only `server/dist/**` is shipped with the function, so the
+ * compiled location is the one that has to resolve in production. Try both.
+ */
+const SCHEMA_CANDIDATES = ['../../sql/schema.sql', '../sql/schema.sql'];
+
+function schemaPath(): string {
+  for (const candidate of SCHEMA_CANDIDATES) {
+    const resolved = fileURLToPath(new URL(candidate, import.meta.url));
+    if (fs.existsSync(resolved)) return resolved;
+  }
+  const tried = SCHEMA_CANDIDATES.map((candidate) => fileURLToPath(new URL(candidate, import.meta.url)));
+  throw new Error(`schema.sql not found. Tried:\n  ${tried.join('\n  ')}`);
+}
 
 function readSchemaSql(): string {
-  return fs.readFileSync(fileURLToPath(schemaSqlUrl), 'utf8');
+  return fs.readFileSync(schemaPath(), 'utf8');
 }
 
 let readyPromise: Promise<void> | null = null;

@@ -129,19 +129,47 @@ Copy `server/.env.example` → `server/.env` (and optionally `client/.env.exampl
 - `DATABASE_URL` or `POSTGRES_URL` – hosted PostgreSQL. Vercel Storage (Neon) sets this automatically. Omit only for local PGlite development.
 - `CORS_ORIGINS` – extra origins when the client is hosted separately.
 
-## Production deploy
+## Deploy to Vercel
 
-**Vercel only.** Frontend and API deploy from the repository root. Create a Neon/Postgres database from the Vercel **Storage** tab and connect it to the project. Do not set `VITE_API_URL`. Do not set Root Directory to `client`.
+Everything (static app + API) deploys as **one project from the repository root**. There is no second service and no `VITE_API_URL` — the client calls `/api` on its own origin.
 
-The build output is `client/dist` and the API is the root `api/index.js` function; both live on the same origin, so there is no `VITE_API_URL`. The first request creates the tables and the demo shops automatically.
+**1. Get the code onto the branch Vercel builds.** Vercel builds `main` by default, and this work lives on `arena/01a0cdf6-qareeb`. Either merge that branch into `main` (there is a pull request open for it) or, in Vercel, set *Settings → Git → Production Branch* to `arena/01a0cdf6-qareeb`.
 
-```sh
-npm ci --include=dev
-npm run typecheck
-npm run build
+**2. Import the project.** <https://vercel.com/new> → import `AshhadMehdi/qareeb`. Leave **Root Directory** at the repository root — `vercel.json` already sets the framework preset to other, the install command to `npm ci --include=dev` (the build needs `typescript` and `vite` from devDependencies) and the output directory to `client/dist`.
+
+**3. Add the database.** Project → **Storage** → **Create Database** → **Neon (Postgres)** → connect it to the project. That sets `POSTGRES_URL`, which the API picks up automatically. Any Postgres works: set `DATABASE_URL` instead if you bring your own.
+
+**4. Set the environment variables you want** (Project → Settings → Environment Variables, then redeploy):
+
+| Variable | Needed? | Why |
+|---|---|---|
+| `POSTGRES_URL` | automatic | Set by the Neon integration. The API also reads `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `NEON_DATABASE_URL`, or `PGHOST`/`PGUSER`/`PGPASSWORD`. |
+| `JWT_SECRET` | recommended | 32+ random characters. Without it Vercel derives a stable secret from the database URL, which means anyone who knows your database URL can mint tokens. |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | optional | Enables web push. Push is simply disabled without them. |
+| `GOOGLE_CLIENT_ID` | optional | Turns on the Google sign-in button. |
+| `DEMO_PASSWORD` | optional | Password for the seeded demo accounts (default `password123`). |
+| `AUTO_SEED` | optional | Default `true`: the first request creates the tables *and* the Abbottabad demo data. Set `false` for an empty store. |
+
+Do **not** set `VITE_API_URL`, and do not set the Root Directory to `client`.
+
+**5. Deploy, then hit the API once.** The very first request creates the schema and seeds the demo data, so it takes a few seconds; every request after that is normal. Check `https://<your-app>.vercel.app/api/health`:
+
+```json
+{ "ok": true, "database": { "connected": true, "driver": "postgres" } }
 ```
 
-Hosted signup and quota requirements can change; free hosting is not guaranteed for commercial use. Real payment gateways, backups, removal of the demo users and a production security review are required before launching to real customers.
+If you instead get `{ "ok": false, "setup": true, ... }`, the database is not connected to the project yet — connect Neon and redeploy. Then open the site and sign in with `ali@demo.com` / `password123`.
+
+### What was verified before writing this
+
+- `npm ci --include=dev` (the exact install command, `--dry-run`) succeeds against the committed lockfile.
+- `npm run build` produces `client/dist` (3.3 MB, including `/images/*.jpg`, `sw.js`, the manifest and icons) and `server/dist`.
+- The **compiled** server boots, creates its schema and seeds demo data with the source tree absent — the same situation as the Vercel function bundle, which ships only `server/dist/**` plus `server/sql/**`. (The compiled build reads `server/dist/sql/schema.sql`; resolving only the source path is a cold-start `503` waiting to happen, which is why `bootstrap.ts` now tries both.)
+- `api/index.js` returns a readable `503 { ok: false, setup: true }` when no database is connected, instead of a stack trace.
+
+### Before real customers
+
+This is a working demo, not a launch: it ships demo users with a known password, sandbox payment gateways (no real JazzCash/Easypaisa merchant account), no backups or monitoring, and free hosting tiers that are not meant for commercial traffic. Replace the seed accounts, wire a real gateway, add backups and a security review first.
 
 ## API overview
 All endpoints are under `/api`, JSON in/out, `Authorization: Bearer <jwt>`. Errors are `{ "error": "message" }`.
