@@ -7,12 +7,18 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const apiPort = process.env.QAREEB_API_PORT ?? process.env.PORT ?? '4000';
+const childEnv = {
+  ...process.env,
+  PORT: apiPort,
+  VITE_API_PROXY: process.env.VITE_API_PROXY ?? `http://localhost:${apiPort}`,
+};
 
 const children = [
   { name: 'api', color: '\u001b[32m', args: ['run', 'dev', '--workspace', 'server'] },
   { name: 'web', color: '\u001b[36m', args: ['run', 'dev', '--workspace', 'client'] },
 ].map(({ name, color, args }) => {
-  const child = spawn(npm, args, { cwd: root, stdio: ['ignore', 'pipe', 'pipe'], env: process.env });
+  const child = spawn(npm, args, { cwd: root, stdio: ['ignore', 'pipe', 'pipe'], env: childEnv });
   const write = (stream) => (chunk) => {
     String(chunk)
       .split('\n')
@@ -33,4 +39,4 @@ const shutdown = () => {
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
-console.log('\n  Qareeb — API http://localhost:4000  ·  web http://localhost:5173\n');
+console.log(`\n  Qareeb — API http://localhost:${apiPort}  ·  web http://localhost:5173\n`);
